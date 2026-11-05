@@ -80,3 +80,9 @@ test('w6-tools-lab passes a correctly-shaped response', async () => {
   const result = await evaluateSubmission({ labId: 'w6-tools-lab', promptText: 'a tool-use prompt' }, FAKE_ENV);
   assert.equal(result.passed, true);
 });
+
+test('w7-agent-lab passes a correctly-shaped response', async () => {
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"plan":"...","result":"..."}', tokensUsed: 11 }));
+  const result = await evaluateSubmission({ labId: 'w7-agent-lab', promptText: 'an agent-planning prompt' }, FAKE_ENV);
+  assert.equal(result.passed, true);
+});

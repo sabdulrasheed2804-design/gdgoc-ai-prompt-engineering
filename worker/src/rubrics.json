@@ -46,5 +46,13 @@
       { "question": "What is the chemical symbol for gold?" },
       { "question": "What is 15% of 640?" }
     ]
+  },
+  "w7-agent-lab": {
+    "schema": { "plan": "string", "result": "string" },
+    "testCases": [
+      { "question": "Plan and summarize how you would research the top 3 programming languages by job demand." },
+      { "question": "Plan and summarize how you would organize a small study group's weekly schedule." },
+      { "question": "Plan and summarize how you would debug a web page that loads slowly." }
+    ]
   }
 }

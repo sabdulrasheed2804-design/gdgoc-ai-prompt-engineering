@@ -64,4 +64,15 @@ export const WEEK6 = {
   milestone: 'Wire at least one real tool (an API, the calculator, or the RAG search) into the assistant via function calling.',
 };
 
-export const WEEKS = [WEEK1, WEEK2, WEEK3, WEEK4, WEEK5, WEEK6];
+export const WEEK7 = {
+  week: 7,
+  title: 'Agents & Multi-Step Workflows',
+  objectives: 'Build an agent loop (plan, act, observe, repeat), manage memory and state, and evaluate agents on task success, not just output quality.',
+  lab: {
+    id: 'w7-agent-lab',
+    prompt: 'Write a system prompt that plans a short multi-step approach before producing a final result, returning valid JSON matching {"plan": string, "result": string} for any task asked.',
+  },
+  milestone: 'Turn the assistant into an agent that plans across multiple tools and steps to complete a task; publish the pass rate from the eval harness.',
+};
+
+export const WEEKS = [WEEK1, WEEK2, WEEK3, WEEK4, WEEK5, WEEK6, WEEK7];
