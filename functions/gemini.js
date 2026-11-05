@@ -1,4 +1,7 @@
-const GEMINI_MODEL = 'gemini-1.5-flash';
+// gemini-1.5-flash was retired by Google in Sept 2025; "-latest" aliases are
+// Google's own answer to this churn (hot-swapped on new releases), so that's
+// the default here instead of pinning a dated model name that will rot.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
 export const gemini = { callGemini };
 

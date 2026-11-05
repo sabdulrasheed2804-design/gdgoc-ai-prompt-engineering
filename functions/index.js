@@ -6,10 +6,13 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { gemini } from './gemini.js';
 
-const DAILY_TOKEN_CAP = 50000;
+export const DAILY_TOKEN_CAP = 50000;
+const MAX_PROMPT_LENGTH = 4000;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RUBRICS = JSON.parse(readFileSync(path.join(__dirname, 'rubric-week1.json'), 'utf8'));
+
+export class ValidationError extends Error {}
 
 let db;
 function getDb() {
@@ -36,12 +39,19 @@ function matchesSchema(text) {
   }
 }
 
-export async function evaluateSubmission({ week, labId, promptText }) {
-  if (!promptText || !promptText.trim()) {
-    throw new Error('promptText is required');
+export async function evaluateSubmission({ labId, promptText }) {
+  if (typeof promptText !== 'string' || !promptText.trim()) {
+    throw new ValidationError('promptText is required');
+  }
+  if (promptText.length > MAX_PROMPT_LENGTH) {
+    throw new ValidationError(`promptText must be ${MAX_PROMPT_LENGTH} characters or fewer`);
   }
 
-  const testCases = RUBRICS[labId] ?? [];
+  const testCases = RUBRICS[labId];
+  if (!testCases) {
+    throw new ValidationError(`Unknown labId: ${labId}`);
+  }
+
   let tokensUsed = 0;
   let matchCount = 0;
 
@@ -51,8 +61,8 @@ export async function evaluateSubmission({ week, labId, promptText }) {
     if (matchesSchema(text)) matchCount += 1;
   }
 
-  const passed = testCases.length > 0 && matchCount === testCases.length;
-  const score = testCases.length > 0 ? matchCount / testCases.length : 0;
+  const passed = matchCount === testCases.length;
+  const score = matchCount / testCases.length;
 
   return {
     passed,
@@ -64,13 +74,8 @@ export async function evaluateSubmission({ week, labId, promptText }) {
   };
 }
 
-export const gradeLab = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) {
-    throw new HttpsError('unauthenticated', 'Sign in required to submit a lab.');
-  }
-
-  const usageRef = getDb().collection('apiUsage').doc(uid);
+export async function handleGradeLab({ uid, week, labId, promptText }, { db }) {
+  const usageRef = db.collection('apiUsage').doc(uid);
   const usageSnap = await usageRef.get();
   const usage = usageSnap.exists ? usageSnap.data() : null;
   const today = todayString();
@@ -83,10 +88,17 @@ export const gradeLab = onCall(async (request) => {
     );
   }
 
-  const { week, labId, promptText } = request.data;
-  const result = await evaluateSubmission({ week, labId, promptText });
+  let result;
+  try {
+    result = await evaluateSubmission({ labId, promptText });
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      throw new HttpsError('invalid-argument', err.message);
+    }
+    throw new HttpsError('unavailable', 'Grading service is busy, please try again.');
+  }
 
-  await getDb().collection('labRuns').add({
+  await db.collection('labRuns').add({
     memberId: uid,
     week,
     labId,
@@ -97,11 +109,25 @@ export const gradeLab = onCall(async (request) => {
     timestamp: new Date().toISOString(),
   });
 
-  await usageRef.set({
-    tokensToday: tokensToday + result.tokensUsed,
-    tokensTotal: (usage?.tokensTotal ?? 0) + result.tokensUsed,
-    lastResetDate: today,
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(usageRef);
+    const current = snap.exists ? snap.data() : null;
+    const currentTokensToday = current && current.lastResetDate === today ? current.tokensToday : 0;
+    tx.set(usageRef, {
+      tokensToday: currentTokensToday + result.tokensUsed,
+      tokensTotal: (current?.tokensTotal ?? 0) + result.tokensUsed,
+      lastResetDate: today,
+    });
   });
 
   return { passed: result.passed, score: result.score, feedback: result.feedback };
+}
+
+export const gradeLab = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Sign in required to submit a lab.');
+  }
+  const { week, labId, promptText } = request.data;
+  return handleGradeLab({ uid, week, labId, promptText }, { db: getDb() });
 });

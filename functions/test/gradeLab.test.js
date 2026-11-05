@@ -1,11 +1,30 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { gemini } from '../gemini.js';
-import { evaluateSubmission } from '../index.js';
+import { evaluateSubmission, ValidationError } from '../index.js';
 
 test('rejects empty promptText before calling Gemini', async () => {
   const spy = test.mock.method(gemini, 'callGemini');
-  await assert.rejects(() => evaluateSubmission({ week: 1, labId: 'w1-json-lab', promptText: '' }), /promptText/);
+  await assert.rejects(() => evaluateSubmission({ week: 1, labId: 'w1-json-lab', promptText: '' }), ValidationError);
+  assert.equal(spy.mock.calls.length, 0);
+});
+
+test('rejects non-string promptText before calling Gemini', async () => {
+  const spy = test.mock.method(gemini, 'callGemini');
+  await assert.rejects(() => evaluateSubmission({ week: 1, labId: 'w1-json-lab', promptText: 42 }), ValidationError);
+  assert.equal(spy.mock.calls.length, 0);
+});
+
+test('rejects promptText over the length cap before calling Gemini', async () => {
+  const spy = test.mock.method(gemini, 'callGemini');
+  const promptText = 'x'.repeat(4001);
+  await assert.rejects(() => evaluateSubmission({ week: 1, labId: 'w1-json-lab', promptText }), ValidationError);
+  assert.equal(spy.mock.calls.length, 0);
+});
+
+test('rejects an unknown labId before calling Gemini', async () => {
+  const spy = test.mock.method(gemini, 'callGemini');
+  await assert.rejects(() => evaluateSubmission({ week: 1, labId: 'no-such-lab', promptText: 'x' }), ValidationError);
   assert.equal(spy.mock.calls.length, 0);
 });
 

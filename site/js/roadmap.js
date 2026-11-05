@@ -25,6 +25,28 @@ export function renderRoadmap(mountEl, weeks) {
     .join('');
 }
 
+export async function runLabSubmission({ submitLab, recordLabRun, memberId, week, labId, promptText }) {
+  let result;
+  try {
+    result = await submitLab({ week, labId, promptText });
+  } catch (err) {
+    return { text: err.message };
+  }
+
+  try {
+    await recordLabRun(memberId, { week, labId, ...result });
+  } catch (err) {
+    // recordLabRun is a client-side history mirror, not the source of truth
+    // (the server already wrote the authoritative labRuns record) -- a
+    // failure here must never hide the grade that was just shown.
+    console.warn('local history mirror write failed', err);
+  }
+
+  return {
+    text: result.passed ? `Passed: ${result.feedback}` : `Not yet: ${result.feedback}`,
+  };
+}
+
 export function wireLabForms(mountEl, memberId) {
   mountEl.querySelectorAll('[data-lab-form]').forEach((form) => {
     form.addEventListener('submit', async (event) => {
@@ -38,17 +60,11 @@ export function wireLabForms(mountEl, memberId) {
       button.disabled = true;
       resultEl.textContent = 'Grading…';
 
-      try {
-        const result = await submitLab({ week, labId, promptText });
-        resultEl.textContent = result.passed
-          ? `Passed: ${result.feedback}`
-          : `Not yet: ${result.feedback}`;
-        await recordLabRun(memberId, { week, labId, ...result });
-      } catch (err) {
-        resultEl.textContent = err.message;
-      } finally {
-        button.disabled = false;
-      }
+      const outcome = await runLabSubmission({
+        submitLab, recordLabRun, memberId, week, labId, promptText,
+      });
+      resultEl.textContent = outcome.text;
+      button.disabled = false;
     });
   });
 }
