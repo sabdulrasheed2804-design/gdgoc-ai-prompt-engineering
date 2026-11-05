@@ -50,3 +50,9 @@ test('matchesSchema accepts a correctly-typed boolean field', () => {
   const schema = { refused: 'boolean' };
   assert.equal(matchesSchema('{"refused":true}', schema), true);
 });
+
+test('w2-fewshot-lab passes a correctly-categorized response', async () => {
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"category":"praise"}', tokensUsed: 8 }));
+  const result = await evaluateSubmission({ labId: 'w2-fewshot-lab', promptText: 'a few-shot prompt' }, FAKE_ENV);
+  assert.equal(result.passed, true);
+});

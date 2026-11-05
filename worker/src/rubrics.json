@@ -6,5 +6,13 @@
       { "question": "How many continents are there?" },
       { "question": "What year did the first moon landing happen?" }
     ]
+  },
+  "w2-fewshot-lab": {
+    "schema": { "category": ["question", "complaint", "praise"] },
+    "testCases": [
+      { "question": "How do I reset my password?" },
+      { "question": "This app crashed twice today, very frustrating." },
+      { "question": "Love the new update, great job!" }
+    ]
   }
 }
