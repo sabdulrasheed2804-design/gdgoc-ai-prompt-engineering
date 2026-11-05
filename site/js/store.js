@@ -8,7 +8,7 @@ function probeLocalStorage() {
   }
 }
 
-const memoryStore = { members: {}, labRuns: [] };
+const memoryStore = { members: {}, labRuns: [], portfolio: {} };
 const browserStorage = probeLocalStorage();
 
 function readLocalMembers() {
@@ -88,4 +88,38 @@ export async function getLabRuns(uid, { firebaseConfig = FIREBASE } = {}) {
   const q = firestore.query(firestore.collection(db, 'labRuns'), firestore.where('memberId', '==', uid));
   const snap = await firestore.getDocs(q);
   return snap.docs.map((d) => d.data());
+}
+
+export async function getPortfolioEntries(uid, { firebaseConfig = FIREBASE } = {}) {
+  if (isLocalMode(firebaseConfig)) {
+    return Object.entries(memoryStore.portfolio)
+      .filter(([key]) => key.startsWith(`${uid}/`))
+      .map(([, entry]) => entry);
+  }
+  const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+  const snap = await firestore.getDocs(firestore.collection(db, 'portfolio', uid, 'entries'));
+  return snap.docs.map((d) => ({ week: Number(d.id), ...d.data() }));
+}
+
+export async function getPublicPortfolio(uid, { firebaseConfig = FIREBASE } = {}) {
+  if (isLocalMode(firebaseConfig)) {
+    return Object.entries(memoryStore.portfolio)
+      .filter(([key, entry]) => key.startsWith(`${uid}/`) && entry.published)
+      .map(([, entry]) => entry);
+  }
+  const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+  const q = firestore.query(firestore.collection(db, 'portfolio', uid, 'entries'), firestore.where('published', '==', true));
+  const snap = await firestore.getDocs(q);
+  return snap.docs.map((d) => ({ week: Number(d.id), ...d.data() }));
+}
+
+export async function setPortfolioPublished(uid, week, published, { firebaseConfig = FIREBASE } = {}) {
+  if (isLocalMode(firebaseConfig)) {
+    const key = `${uid}/${week}`;
+    const existing = memoryStore.portfolio[key] ?? { week, promptText: '', outputSnippet: '', rubricScore: 0 };
+    memoryStore.portfolio[key] = { ...existing, published };
+    return;
+  }
+  const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+  await firestore.setDoc(firestore.doc(db, 'portfolio', uid, 'entries', String(week)), { published }, { merge: true });
 }

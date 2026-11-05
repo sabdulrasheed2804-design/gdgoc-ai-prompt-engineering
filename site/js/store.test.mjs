@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isLocalMode, setMember, getMember, recordLabRun, getLabRuns } from './store.js';
+import { isLocalMode, setMember, getMember, recordLabRun, getLabRuns, getPortfolioEntries, setPortfolioPublished, getPublicPortfolio } from './store.js';
 
 test('local mode round-trips a member record', async () => {
   const firebaseConfig = null;
@@ -16,4 +16,19 @@ test("getLabRuns returns only the given member's runs, in local mode", async () 
   const runs = await getLabRuns('member-a', { firebaseConfig: null });
   assert.equal(runs.length, 1);
   assert.equal(runs[0].memberId, 'member-a');
+});
+
+test("getPortfolioEntries returns only the given member's entries, in local mode", async () => {
+  await setPortfolioPublished('member-x', 1, false, { firebaseConfig: null });
+  const entries = await getPortfolioEntries('member-x', { firebaseConfig: null });
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].week, 1);
+});
+
+test('getPublicPortfolio only returns published entries', async () => {
+  await setPortfolioPublished('member-y', 1, true, { firebaseConfig: null });
+  await setPortfolioPublished('member-y', 2, false, { firebaseConfig: null });
+  const publicEntries = await getPublicPortfolio('member-y', { firebaseConfig: null });
+  assert.equal(publicEntries.length, 1);
+  assert.equal(publicEntries[0].week, 1);
 });
