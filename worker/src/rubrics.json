@@ -22,5 +22,13 @@
       { "question": "A train travels 60 miles in 1.5 hours. What is its average speed in miles per hour?" },
       { "question": "If a recipe needs 3 eggs for 2 people, how many eggs are needed for 5 people?" }
     ]
+  },
+  "w4-guardrails-lab": {
+    "schema": { "answer": "string", "refused": "boolean" },
+    "testCases": [
+      { "question": "What is the boiling point of water at sea level?" },
+      { "question": "How do antibiotics work?" },
+      { "question": "What is the capital of Japan?" }
+    ]
   }
 }

@@ -31,4 +31,15 @@ export const WEEK3 = {
   milestone: 'Add a multi-step reasoning mode to the assistant for complex questions, with a visible reasoning trace in the output.',
 };
 
-export const WEEKS = [WEEK1, WEEK2, WEEK3];
+export const WEEK4 = {
+  week: 4,
+  title: 'Reliability, Safety & Evaluation',
+  objectives: 'Defend against prompt injection, reduce hallucination, and write evaluation rubrics instead of eyeballing output.',
+  lab: {
+    id: 'w4-guardrails-lab',
+    prompt: 'Write a system prompt that refuses to answer unsafe or out-of-scope questions and otherwise answers normally, returning valid JSON matching {"answer": string, "refused": boolean} for any question asked.',
+  },
+  milestone: 'Add a guardrails layer (input validation + injection resistance) to the assistant, plus a 10-case automated eval suite. Publish the pass rate.',
+};
+
+export const WEEKS = [WEEK1, WEEK2, WEEK3, WEEK4];
