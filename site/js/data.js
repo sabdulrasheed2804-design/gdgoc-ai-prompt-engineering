@@ -75,4 +75,11 @@ export const WEEK7 = {
   milestone: 'Turn the assistant into an agent that plans across multiple tools and steps to complete a task; publish the pass rate from the eval harness.',
 };
 
-export const WEEKS = [WEEK1, WEEK2, WEEK3, WEEK4, WEEK5, WEEK6, WEEK7];
+export const WEEK8 = {
+  week: 8,
+  title: 'Capstone Sprint & Demo Day',
+  objectives: 'Polish the assistant into something presentable, demo it clearly, and ship a professional artifact members can point to afterward.',
+  milestone: 'A public demo of the full assistant (structured output, reasoning, guardrails, RAG, tools and the agent loop working together) plus a published prompt portfolio, shown live or recorded in a 5-minute Demo Day slot.',
+};
+
+export const WEEKS = [WEEK1, WEEK2, WEEK3, WEEK4, WEEK5, WEEK6, WEEK7, WEEK8];
