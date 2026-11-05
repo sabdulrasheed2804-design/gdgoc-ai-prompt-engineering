@@ -64,6 +64,10 @@ labs, a public prompt portfolio, and peer review on milestones.
   features, not framework choice.
 - One serverless function is the only new piece of infrastructure. It exists
   solely to hold the LLM API key server-side; the browser never sees it.
+- No billing-gated infrastructure: Firebase Cloud Functions require the
+  Blaze (pay-as-you-go) plan — a billing card on file — even for free-tier
+  usage. The cluster has no card available, so the grading function runs on
+  Cloudflare Workers instead (genuinely free tier, no card required).
 - 8-week semester (not 10, as InfraTrack runs) — content volume, XP curve
   and certificate thresholds are recalibrated for that length.
 
@@ -81,19 +85,29 @@ Google-first orientation. The integration is provider-agnostic behind the
 proxy function so a paid Anthropic/OpenAI key can replace it later without
 touching client code.
 
-**Grading proxy:** one Cloud Function holds the API key, accepts
-`{memberId, week, labId, promptText}`, runs the prompt against that lab's
-test cases/rubric (stored server-side, not shipped to the client, so
-members can't read the answer key), returns `{passed, score, feedback}`,
-and records token usage against that member's daily cap in Firestore.
-Exceeding the cap fails closed with a clear message, not a silent retry.
-Concurrent submissions (e.g. 30+ members grading at once in a live
-session) are handled with retry/backoff inside the function against the
-provider's rate limit, not a queue — simplest thing that holds at
-cluster scale; revisit only if backoff delays become visible to members.
+**Grading proxy:** one Cloudflare Worker (`worker/`, not a Firebase Cloud
+Function — see the no-billing constraint above) holds the Gemini API key,
+accepts `{week, labId, promptText}` plus the member's Firebase ID token
+(`Authorization: Bearer <token>`), verifies that token against Google's
+JWKS (the Worker can't use the Admin SDK, so it can't rely on `onCall`'s
+built-in auth context the way a Cloud Function would), runs the prompt
+against that lab's test cases/rubric (stored server-side, not shipped to
+the client, so members can't read the answer key), returns `{passed,
+score, feedback}`, and records token usage against that member's daily
+cap in Firestore — reached over Firestore's REST API with a
+service-account JWT (signed via the `jose` library's WebCrypto support),
+since the Worker runtime can't use the Admin SDK either. Exceeding the
+cap fails closed with a clear message, not a silent retry. Concurrent
+submissions (e.g. 30+ members grading at once in a live session) are
+handled with retry/backoff inside the function against the provider's
+rate limit, not a queue — simplest thing that holds at cluster scale;
+revisit only if backoff delays become visible to members. Every outbound
+fetch (Gemini, Firestore, Google's OAuth2 token endpoint) carries an
+`AbortSignal.timeout` — found necessary live, after a request hung
+indefinitely during a genuine Gemini outage with nothing to bound it.
 
 **Grading weeks 4-7 (RAG, tools, agents) without new infrastructure:**
-these stay inside the same one Cloud Function, no vector database or tool
+these stay inside the same one Worker, no vector database or tool
 runtime added. RAG week: the function holds a small bundled knowledge
 base (a JSON file of chunks) and does keyword/lightweight similarity
 retrieval in-process, not a hosted vector store. Tools week: the function
@@ -168,10 +182,9 @@ consent clean and needs no moderation queue for a first version.
 - Exact rubric/test-case schema per lab (JSON shape the proxy function
   evaluates against) — content team's job per week, not an architectural
   decision.
-- Choice between Firebase Cloud Functions and an external edge function
-  (Vercel/Cloudflare Worker) for the proxy — recommend Cloud Functions
-  for same-project IAM simplicity; revisit only if cold-start latency
-  during a live session is a problem.
+- ~~Choice between Firebase Cloud Functions and an external edge function~~
+  — settled: Cloudflare Workers, forced by the no-billing-card constraint
+  (see Constraints and the grading proxy decision above).
 - Peer review assignment algorithm (random vs. round-robin vs.
   load-balanced) — any reasonable default works at cluster scale; pick one
   and adjust if it causes complaints.
