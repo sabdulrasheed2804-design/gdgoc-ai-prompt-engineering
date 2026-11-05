@@ -1,7 +1,11 @@
 import { isLocalMode } from './store.js';
 import { signIn, onAuthChange } from './auth.js';
+import { renderRoadmap, wireLabForms } from './roadmap.js';
+import { WEEKS } from './data.js';
 
 const signInButton = document.getElementById('sign-in');
+const appEl = document.getElementById('app');
+
 signInButton.textContent = isLocalMode() ? 'Continue' : 'Continue with Google';
 
 signInButton.addEventListener('click', async () => {
@@ -9,5 +13,8 @@ signInButton.addEventListener('click', async () => {
 });
 
 onAuthChange((member) => {
-  if (member) signInButton.textContent = member.name;
+  if (!member) return;
+  signInButton.textContent = member.name;
+  renderRoadmap(appEl, WEEKS);
+  wireLabForms(appEl, member.uid);
 });
