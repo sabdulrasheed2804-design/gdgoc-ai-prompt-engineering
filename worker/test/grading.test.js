@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { gemini } from '../src/gemini.js';
 import { evaluateSubmission, ValidationError, matchesSchema } from '../src/grading.js';
+import RUBRICS from '../src/rubrics.json' with { type: 'json' };
+import { WEEKS } from '../../site/js/data.js';
 
 const FAKE_ENV = { GEMINI_API_KEY: 'fake', GEMINI_MODEL: 'fake-model' };
 
@@ -21,6 +23,12 @@ test('rejects promptText over the length cap before calling Gemini', async () =>
 test('rejects an unknown labId before calling Gemini', async () => {
   const spy = test.mock.method(gemini, 'callGemini');
   await assert.rejects(() => evaluateSubmission({ labId: 'no-such-lab', promptText: 'x' }, FAKE_ENV), ValidationError);
+  assert.equal(spy.mock.calls.length, 0);
+});
+
+test('rejects a labId that is an inherited object property name, as unknown rather than crashing', async () => {
+  const spy = test.mock.method(gemini, 'callGemini');
+  await assert.rejects(() => evaluateSubmission({ labId: 'constructor', promptText: 'x' }, FAKE_ENV), ValidationError);
   assert.equal(spy.mock.calls.length, 0);
 });
 
@@ -85,4 +93,13 @@ test('w7-agent-lab passes a correctly-shaped response', async () => {
   test.mock.method(gemini, 'callGemini', async () => ({ text: '{"plan":"...","result":"..."}', tokensUsed: 11 }));
   const result = await evaluateSubmission({ labId: 'w7-agent-lab', promptText: 'an agent-planning prompt' }, FAKE_ENV);
   assert.equal(result.passed, true);
+});
+
+test('every week with a lab has a matching rubric entry with exactly 3 test cases', () => {
+  for (const week of WEEKS) {
+    if (!week.lab) continue;
+    const rubric = RUBRICS[week.lab.id];
+    assert.ok(rubric, `Week ${week.week}'s lab.id "${week.lab.id}" has no entry in rubrics.json`);
+    assert.equal(rubric.testCases.length, 3, `Week ${week.week}'s rubric should have exactly 3 test cases`);
+  }
 });

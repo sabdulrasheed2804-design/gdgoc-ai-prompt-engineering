@@ -31,7 +31,7 @@ export async function evaluateSubmission({ labId, promptText }, env) {
     throw new ValidationError(`promptText must be ${MAX_PROMPT_LENGTH} characters or fewer`);
   }
 
-  const rubric = RUBRICS[labId];
+  const rubric = Object.hasOwn(RUBRICS, labId) ? RUBRICS[labId] : undefined;
   if (!rubric) {
     throw new ValidationError(`Unknown labId: ${labId}`);
   }

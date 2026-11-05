@@ -34,9 +34,9 @@
   "w5-rag-lab": {
     "schema": { "answer": "string", "grounded": "boolean" },
     "testCases": [
-      { "question": "What does the provided context say about return policy?" },
-      { "question": "According to the context, who is the main contact for support?" },
-      { "question": "What does the context say about pricing?" }
+      { "question": "Context: Items can be returned within 30 days with a receipt for a full refund.\n\nQuestion: What is the return policy?" },
+      { "question": "Context: For support, email help@example.com or call (555) 010-2020 during business hours.\n\nQuestion: Who is the main contact for support?" },
+      { "question": "Context: Items can be returned within 30 days with a receipt for a full refund.\n\nQuestion: What is the warranty period on electronics?" }
     ]
   },
   "w6-tools-lab": {
