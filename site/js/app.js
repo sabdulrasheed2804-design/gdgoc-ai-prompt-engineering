@@ -13,7 +13,7 @@ const navEl = document.getElementById('main-nav');
 const TOTAL_LABS = WEEKS.filter((w) => w.lab).length;
 
 let currentMember = null;
-let routerStarted = false;
+let router = null;
 
 warmUp();
 signInButton.textContent = isLocalMode() ? 'Continue' : 'Continue with Google';
@@ -22,8 +22,9 @@ signInButton.addEventListener('click', async () => {
   await signIn();
 });
 
-async function renderDashboardRoute(mountEl) {
+async function renderDashboardRoute(mountEl, isStale) {
   const labRuns = await getLabRuns(currentMember.uid);
+  if (isStale()) return;
   renderDashboard(mountEl, { member: currentMember, stats: computeStats(labRuns, { totalLabs: TOTAL_LABS }) });
 }
 
@@ -38,11 +39,12 @@ onAuthChange((member) => {
   signInButton.textContent = member.name;
   navEl.hidden = false;
 
-  if (!routerStarted) {
-    routerStarted = true;
-    initRouter(appEl, {
+  if (!router) {
+    router = initRouter(appEl, {
       dashboard: renderDashboardRoute,
       roadmap: renderRoadmapRoute,
     }, { fallback: 'dashboard', navEl });
+  } else {
+    router.refresh();
   }
 });
