@@ -79,3 +79,13 @@ export async function recordLabRun(uid, run, { firebaseConfig = FIREBASE } = {})
   const { db, firestore } = await getFirestoreHandles(firebaseConfig);
   await firestore.addDoc(firestore.collection(db, 'labRuns'), entry);
 }
+
+export async function getLabRuns(uid, { firebaseConfig = FIREBASE } = {}) {
+  if (isLocalMode(firebaseConfig)) {
+    return memoryStore.labRuns.filter((r) => r.memberId === uid);
+  }
+  const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+  const q = firestore.query(firestore.collection(db, 'labRuns'), firestore.where('memberId', '==', uid));
+  const snap = await firestore.getDocs(q);
+  return snap.docs.map((d) => d.data());
+}
