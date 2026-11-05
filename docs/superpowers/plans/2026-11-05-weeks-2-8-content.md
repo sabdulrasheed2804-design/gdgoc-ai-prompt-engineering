@@ -585,3 +585,16 @@ worker/test/grading.test.js add schema-generalization tests (enum mismatch, bool
   prompts and test questions) rather than logic-heavy; the one genuine code
   change (Task 1's schema generalization) is kept to a single task with a
   tight diff.
+
+## Post-execution note (final review)
+
+Only Task 1 had a rebuild-and-redeploy step; Tasks 2-7 each added a lab to
+`rubrics.json` without redeploying, so the live Worker briefly knew only
+about Week 1's lab while new weeks' `data.js` content was already live on
+the site. Caught in final review, fixed by rebuilding and redeploying once
+with the complete `rubrics.json` (verified by grepping the built bundle for
+all 7 lab ids before deploying). **For future plans that touch
+`worker/src/rubrics.json` or anything else the Worker bundles:** either add
+a rebuild-and-redeploy step to every task that changes it, or treat deploy
+as its own final task after all content tasks land — don't rely on an
+earlier task's deploy step to cover later tasks' changes.
