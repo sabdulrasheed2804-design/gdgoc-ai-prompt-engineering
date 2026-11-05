@@ -13,13 +13,15 @@ export function renderRoadmap(mountEl, weeks) {
       <section data-week="${w.week}">
         <h2>Week ${w.week} — ${escapeHtml(w.title)}</h2>
         <p>${escapeHtml(w.objectives)}</p>
-        <p><strong>Lab:</strong> ${escapeHtml(w.lab.prompt)}</p>
+        ${w.lab ? `<p><strong>Lab:</strong> ${escapeHtml(w.lab.prompt)}</p>` : ''}
         <p><strong>Milestone:</strong> ${escapeHtml(w.milestone)}</p>
-        <form data-lab-form data-lab-id="${w.lab.id}">
-          <textarea data-lab-input rows="4" placeholder="Write your system prompt here"></textarea>
-          <button type="submit">Submit lab</button>
-          <p data-lab-result></p>
-        </form>
+        ${w.lab ? `
+          <form data-lab-form data-lab-id="${w.lab.id}">
+            <textarea data-lab-input rows="4" placeholder="Write your system prompt here"></textarea>
+            <button type="submit">Submit lab</button>
+            <p data-lab-result></p>
+          </form>
+        ` : ''}
       </section>
     `)
     .join('');

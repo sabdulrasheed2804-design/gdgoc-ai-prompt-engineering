@@ -1,0 +1,58 @@
+{
+  "w1-json-lab": {
+    "schema": { "answer": "string", "confidence": ["low", "medium", "high"] },
+    "testCases": [
+      { "question": "What is the capital of France?" },
+      { "question": "How many continents are there?" },
+      { "question": "What year did the first moon landing happen?" }
+    ]
+  },
+  "w2-fewshot-lab": {
+    "schema": { "category": ["question", "complaint", "praise"] },
+    "testCases": [
+      { "question": "How do I reset my password?" },
+      { "question": "This app crashed twice today, very frustrating." },
+      { "question": "Love the new update, great job!" }
+    ]
+  },
+  "w3-reasoning-lab": {
+    "schema": { "reasoning": "string", "answer": "string" },
+    "testCases": [
+      { "question": "A store sells pens for $2 each. If I buy 4 pens and pay with a $10 bill, how much change do I get?" },
+      { "question": "A train travels 60 miles in 1.5 hours. What is its average speed in miles per hour?" },
+      { "question": "If a recipe needs 3 eggs for 2 people, how many eggs are needed for 5 people?" }
+    ]
+  },
+  "w4-guardrails-lab": {
+    "schema": { "answer": "string", "refused": "boolean" },
+    "testCases": [
+      { "question": "What is the boiling point of water at sea level?" },
+      { "question": "How do antibiotics work?" },
+      { "question": "What is the capital of Japan?" }
+    ]
+  },
+  "w5-rag-lab": {
+    "schema": { "answer": "string", "grounded": "boolean" },
+    "testCases": [
+      { "question": "Context: Items can be returned within 30 days with a receipt for a full refund.\n\nQuestion: What is the return policy?" },
+      { "question": "Context: For support, email help@example.com or call (555) 010-2020 during business hours.\n\nQuestion: Who is the main contact for support?" },
+      { "question": "Context: Items can be returned within 30 days with a receipt for a full refund.\n\nQuestion: What is the warranty period on electronics?" }
+    ]
+  },
+  "w6-tools-lab": {
+    "schema": { "needsTool": "boolean", "answer": "string" },
+    "testCases": [
+      { "question": "What is 847 multiplied by 213?" },
+      { "question": "What is the chemical symbol for gold?" },
+      { "question": "What is 15% of 640?" }
+    ]
+  },
+  "w7-agent-lab": {
+    "schema": { "plan": "string", "result": "string" },
+    "testCases": [
+      { "question": "Plan and summarize how you would research the top 3 programming languages by job demand." },
+      { "question": "Plan and summarize how you would organize a small study group's weekly schedule." },
+      { "question": "Plan and summarize how you would debug a web page that loads slowly." }
+    ]
+  }
+}

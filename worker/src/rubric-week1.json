@@ -1,7 +1,0 @@
-{
-  "w1-json-lab": [
-    { "question": "What is the capital of France?", "mustMatchSchema": true },
-    { "question": "How many continents are there?", "mustMatchSchema": true },
-    { "question": "What year did the first moon landing happen?", "mustMatchSchema": true }
-  ]
-}
