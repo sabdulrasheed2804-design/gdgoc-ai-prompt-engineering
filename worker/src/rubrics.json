@@ -38,5 +38,13 @@
       { "question": "According to the context, who is the main contact for support?" },
       { "question": "What does the context say about pricing?" }
     ]
+  },
+  "w6-tools-lab": {
+    "schema": { "needsTool": "boolean", "answer": "string" },
+    "testCases": [
+      { "question": "What is 847 multiplied by 213?" },
+      { "question": "What is the chemical symbol for gold?" },
+      { "question": "What is 15% of 640?" }
+    ]
   }
 }

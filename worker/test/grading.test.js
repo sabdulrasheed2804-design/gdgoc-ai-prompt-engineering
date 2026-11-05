@@ -74,3 +74,9 @@ test('w5-rag-lab passes a correctly-shaped response', async () => {
   const result = await evaluateSubmission({ labId: 'w5-rag-lab', promptText: 'a RAG prompt' }, FAKE_ENV);
   assert.equal(result.passed, true);
 });
+
+test('w6-tools-lab passes a correctly-shaped response', async () => {
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"needsTool":true,"answer":"180411"}', tokensUsed: 5 }));
+  const result = await evaluateSubmission({ labId: 'w6-tools-lab', promptText: 'a tool-use prompt' }, FAKE_ENV);
+  assert.equal(result.passed, true);
+});

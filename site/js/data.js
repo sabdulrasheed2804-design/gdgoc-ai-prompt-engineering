@@ -53,4 +53,15 @@ export const WEEK5 = {
   milestone: 'Ground the assistant in a small knowledge base via RAG, with a source citation on every grounded answer.',
 };
 
-export const WEEKS = [WEEK1, WEEK2, WEEK3, WEEK4, WEEK5];
+export const WEEK6 = {
+  week: 6,
+  title: 'Tool Use & Function Calling',
+  objectives: 'Give the model real capabilities beyond text, design safe and well-specified tool schemas, and handle tool outputs and failures.',
+  lab: {
+    id: 'w6-tools-lab',
+    prompt: 'Write a system prompt that decides whether a calculator tool is needed to answer a question, returning valid JSON matching {"needsTool": boolean, "answer": string} for any question asked.',
+  },
+  milestone: 'Wire at least one real tool (an API, the calculator, or the RAG search) into the assistant via function calling.',
+};
+
+export const WEEKS = [WEEK1, WEEK2, WEEK3, WEEK4, WEEK5, WEEK6];
