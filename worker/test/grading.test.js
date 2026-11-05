@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { gemini } from '../src/gemini.js';
-import { evaluateSubmission, ValidationError } from '../src/grading.js';
+import { evaluateSubmission, ValidationError, matchesSchema } from '../src/grading.js';
 
 const FAKE_ENV = { GEMINI_API_KEY: 'fake', GEMINI_MODEL: 'fake-model' };
 
@@ -34,4 +34,19 @@ test('fails when output does not match the schema', async () => {
   test.mock.method(gemini, 'callGemini', async () => ({ text: 'not json', tokensUsed: 10 }));
   const result = await evaluateSubmission({ labId: 'w1-json-lab', promptText: 'a system prompt' }, FAKE_ENV);
   assert.equal(result.passed, false);
+});
+
+test('matchesSchema rejects an enum value outside the declared options', () => {
+  const schema = { category: ['question', 'complaint', 'praise'] };
+  assert.equal(matchesSchema('{"category":"spam"}', schema), false);
+});
+
+test('matchesSchema rejects a boolean field sent as a string', () => {
+  const schema = { refused: 'boolean' };
+  assert.equal(matchesSchema('{"refused":"true"}', schema), false);
+});
+
+test('matchesSchema accepts a correctly-typed boolean field', () => {
+  const schema = { refused: 'boolean' };
+  assert.equal(matchesSchema('{"refused":true}', schema), true);
 });

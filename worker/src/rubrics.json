@@ -1,0 +1,10 @@
+{
+  "w1-json-lab": {
+    "schema": { "answer": "string", "confidence": ["low", "medium", "high"] },
+    "testCases": [
+      { "question": "What is the capital of France?" },
+      { "question": "How many continents are there?" },
+      { "question": "What year did the first moon landing happen?" }
+    ]
+  }
+}
