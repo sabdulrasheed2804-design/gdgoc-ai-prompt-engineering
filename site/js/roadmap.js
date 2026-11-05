@@ -8,23 +8,27 @@ function escapeHtml(str) {
 }
 
 export function renderRoadmap(mountEl, weeks) {
-  mountEl.innerHTML = weeks
+  const cards = weeks
     .map((w) => `
-      <section data-week="${w.week}">
-        <h2>Week ${w.week} — ${escapeHtml(w.title)}</h2>
-        <p>${escapeHtml(w.objectives)}</p>
-        ${w.lab ? `<p><strong>Lab:</strong> ${escapeHtml(w.lab.prompt)}</p>` : ''}
-        <p><strong>Milestone:</strong> ${escapeHtml(w.milestone)}</p>
+      <section class="week-card" data-week="${w.week}">
+        <div class="week-card__head">
+          <span class="week-card__num">Week ${w.week}</span>
+          <h2 class="week-card__title">${escapeHtml(w.title)}</h2>
+        </div>
+        <p class="week-card__objectives">${escapeHtml(w.objectives)}</p>
+        ${w.lab ? `<p class="week-card__lab"><strong>Lab:</strong> ${escapeHtml(w.lab.prompt)}</p>` : ''}
+        <p class="week-card__milestone"><strong>Milestone:</strong> ${escapeHtml(w.milestone)}</p>
         ${w.lab ? `
-          <form data-lab-form data-lab-id="${w.lab.id}">
-            <textarea data-lab-input rows="4" placeholder="Write your system prompt here"></textarea>
-            <button type="submit">Submit lab</button>
-            <p data-lab-result></p>
+          <form class="lab-form" data-lab-form data-lab-id="${w.lab.id}">
+            <textarea class="lab-form__input" data-lab-input rows="4" placeholder="Write your system prompt here"></textarea>
+            <button class="btn btn--primary" type="submit">Submit lab</button>
+            <p class="lab-form__result" data-lab-result></p>
           </form>
         ` : ''}
       </section>
     `)
     .join('');
+  mountEl.innerHTML = `<div class="week-grid">${cards}</div>`;
 }
 
 export async function runLabSubmission({ submitLab, recordLabRun, memberId, week, labId, promptText }) {
