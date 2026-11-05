@@ -42,4 +42,15 @@ export const WEEK4 = {
   milestone: 'Add a guardrails layer (input validation + injection resistance) to the assistant, plus a 10-case automated eval suite. Publish the pass rate.',
 };
 
-export const WEEKS = [WEEK1, WEEK2, WEEK3, WEEK4];
+export const WEEK5 = {
+  week: 5,
+  title: 'Retrieval-Augmented Generation (RAG)',
+  objectives: 'Understand embeddings and semantic search, ground model answers in real documents, and cut hallucination via retrieval.',
+  lab: {
+    id: 'w5-rag-lab',
+    prompt: 'Write a system prompt that answers a question only using the provided context, returning valid JSON matching {"answer": string, "grounded": boolean} for any question asked (grounded=false if the context does not contain the answer).',
+  },
+  milestone: 'Ground the assistant in a small knowledge base via RAG, with a source citation on every grounded answer.',
+};
+
+export const WEEKS = [WEEK1, WEEK2, WEEK3, WEEK4, WEEK5];

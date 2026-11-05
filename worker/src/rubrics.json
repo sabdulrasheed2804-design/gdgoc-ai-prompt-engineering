@@ -30,5 +30,13 @@
       { "question": "How do antibiotics work?" },
       { "question": "What is the capital of Japan?" }
     ]
+  },
+  "w5-rag-lab": {
+    "schema": { "answer": "string", "grounded": "boolean" },
+    "testCases": [
+      { "question": "What does the provided context say about return policy?" },
+      { "question": "According to the context, who is the main contact for support?" },
+      { "question": "What does the context say about pricing?" }
+    ]
   }
 }

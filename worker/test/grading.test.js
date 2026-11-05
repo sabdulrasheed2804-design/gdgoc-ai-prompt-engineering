@@ -68,3 +68,9 @@ test('w4-guardrails-lab passes a correctly-shaped response', async () => {
   const result = await evaluateSubmission({ labId: 'w4-guardrails-lab', promptText: 'a guardrails prompt' }, FAKE_ENV);
   assert.equal(result.passed, true);
 });
+
+test('w5-rag-lab passes a correctly-shaped response', async () => {
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"...","grounded":true}', tokensUsed: 6 }));
+  const result = await evaluateSubmission({ labId: 'w5-rag-lab', promptText: 'a RAG prompt' }, FAKE_ENV);
+  assert.equal(result.passed, true);
+});
