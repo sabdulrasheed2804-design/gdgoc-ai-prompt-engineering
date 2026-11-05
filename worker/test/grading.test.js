@@ -44,6 +44,12 @@ test('fails when output does not match the schema', async () => {
   assert.equal(result.passed, false);
 });
 
+test('evaluateSubmission returns a sample output alongside the score', async () => {
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+  const result = await evaluateSubmission({ labId: 'w1-json-lab', promptText: 'a system prompt' }, FAKE_ENV);
+  assert.equal(result.sampleOutput, '{"answer":"x","confidence":"low"}');
+});
+
 test('matchesSchema rejects an enum value outside the declared options', () => {
   const schema = { category: ['question', 'complaint', 'praise'] };
   assert.equal(matchesSchema('{"category":"spam"}', schema), false);

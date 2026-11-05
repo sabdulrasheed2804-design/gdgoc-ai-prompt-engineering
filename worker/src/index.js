@@ -57,6 +57,18 @@ export async function handleGradeLab({ uid, week, labId, promptText }, env, fire
     timestamp: new Date().toISOString(),
   });
 
+  if (result.passed) {
+    await firestore.transactionalUpdate(`portfolio/${uid}/entries/${week}`, (current) => {
+      if (current && current.rubricScore >= result.score) return current;
+      return {
+        promptText,
+        outputSnippet: result.sampleOutput,
+        rubricScore: result.score,
+        published: current?.published ?? false,
+      };
+    });
+  }
+
   await firestore.transactionalUpdate(usagePath, (current) => {
     const currentTokensToday = current && current.lastResetDate === today ? current.tokensToday : 0;
     return {

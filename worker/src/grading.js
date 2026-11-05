@@ -39,10 +39,12 @@ export async function evaluateSubmission({ labId, promptText }, env) {
 
   let tokensUsed = 0;
   let matchCount = 0;
+  let sampleOutput;
 
   for (const testCase of testCases) {
     const { text, tokensUsed: used } = await gemini.callGemini(promptText, testCase.question, env);
     tokensUsed += used;
+    if (sampleOutput === undefined) sampleOutput = text;
     if (matchesSchema(text, schema)) matchCount += 1;
   }
 
@@ -56,5 +58,6 @@ export async function evaluateSubmission({ labId, promptText }, env) {
       ? 'All test questions returned valid matching JSON.'
       : `${matchCount}/${testCases.length} test questions returned valid matching JSON.`,
     tokensUsed,
+    sampleOutput,
   };
 }
