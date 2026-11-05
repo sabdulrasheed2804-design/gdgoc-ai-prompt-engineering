@@ -1,0 +1,16 @@
+{
+  "name": "gdgoc-prompt-eng-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --format=esm --platform=browser --outfile=dist/index.js",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "jose": "^5.9.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

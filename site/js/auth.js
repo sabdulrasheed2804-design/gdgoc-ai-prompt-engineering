@@ -17,6 +17,16 @@ async function getAuthHandles() {
   return authPromise;
 }
 
+// Call once, early in boot (never at module scope -- that would run the
+// dynamic import as a side effect of merely importing this file, including
+// from tests). Warms firebase/auth up front so signIn()'s signInWithPopup
+// call runs right after the click with no intervening await -- otherwise
+// the gap while firebase/auth loads from the CDN risks Chrome no longer
+// treating the popup as triggered by a direct user gesture.
+export function warmUp() {
+  if (!isLocalMode()) getAuthHandles();
+}
+
 export async function signIn() {
   if (isLocalMode()) {
     const existing = await getMember(LOCAL_MEMBER.uid);
@@ -33,6 +43,13 @@ export async function signOut() {
   if (isLocalMode()) return;
   const { auth, authModule } = await getAuthHandles();
   await authModule.signOut(auth);
+}
+
+export async function getIdToken() {
+  if (isLocalMode()) return null;
+  const { auth } = await getAuthHandles();
+  if (!auth.currentUser) return null;
+  return auth.currentUser.getIdToken();
 }
 
 export function onAuthChange(callback) {

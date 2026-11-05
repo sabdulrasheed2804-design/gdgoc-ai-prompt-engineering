@@ -1,19 +1,14 @@
-// gemini-1.5-flash was retired by Google in Sept 2025; "-latest" aliases are
-// Google's own answer to this churn (hot-swapped on new releases), so that's
-// the default here instead of pinning a dated model name that will rot.
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
-
-export const gemini = { callGemini };
-
 const MAX_RETRIES = 2;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function callGemini(systemPrompt, userMessage) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+export const gemini = { callGemini };
+
+async function callGemini(systemPrompt, userMessage, env) {
+  const model = env.GEMINI_MODEL || 'gemini-flash-latest';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEMINI_API_KEY}`;
   const body = JSON.stringify({
     systemInstruction: { parts: [{ text: systemPrompt }] },
     contents: [{ role: 'user', parts: [{ text: userMessage }] }],
@@ -26,6 +21,7 @@ async function callGemini(systemPrompt, userMessage) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body,
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!response.ok) {
