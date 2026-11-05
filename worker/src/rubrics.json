@@ -14,5 +14,13 @@
       { "question": "This app crashed twice today, very frustrating." },
       { "question": "Love the new update, great job!" }
     ]
+  },
+  "w3-reasoning-lab": {
+    "schema": { "reasoning": "string", "answer": "string" },
+    "testCases": [
+      { "question": "A store sells pens for $2 each. If I buy 4 pens and pay with a $10 bill, how much change do I get?" },
+      { "question": "A train travels 60 miles in 1.5 hours. What is its average speed in miles per hour?" },
+      { "question": "If a recipe needs 3 eggs for 2 people, how many eggs are needed for 5 people?" }
+    ]
   }
 }

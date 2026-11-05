@@ -20,4 +20,15 @@ export const WEEK2 = {
   milestone: 'Add a structured Q&A feature to the assistant, using few-shot examples and JSON-schema output validated in code.',
 };
 
-export const WEEKS = [WEEK1, WEEK2];
+export const WEEK3 = {
+  week: 3,
+  title: 'Reasoning Techniques',
+  objectives: 'Elicit multi-step reasoning, decompose complex tasks, and improve reliability through self-consistency.',
+  lab: {
+    id: 'w3-reasoning-lab',
+    prompt: 'Write a system prompt that makes the model reason step by step before answering, returning valid JSON matching {"reasoning": string, "answer": string} for any math word problem asked.',
+  },
+  milestone: 'Add a multi-step reasoning mode to the assistant for complex questions, with a visible reasoning trace in the output.',
+};
+
+export const WEEKS = [WEEK1, WEEK2, WEEK3];

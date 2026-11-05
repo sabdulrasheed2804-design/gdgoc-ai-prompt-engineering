@@ -56,3 +56,9 @@ test('w2-fewshot-lab passes a correctly-categorized response', async () => {
   const result = await evaluateSubmission({ labId: 'w2-fewshot-lab', promptText: 'a few-shot prompt' }, FAKE_ENV);
   assert.equal(result.passed, true);
 });
+
+test('w3-reasoning-lab passes a correctly-shaped response', async () => {
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"reasoning":"...","answer":"2"}', tokensUsed: 9 }));
+  const result = await evaluateSubmission({ labId: 'w3-reasoning-lab', promptText: 'a reasoning prompt' }, FAKE_ENV);
+  assert.equal(result.passed, true);
+});
