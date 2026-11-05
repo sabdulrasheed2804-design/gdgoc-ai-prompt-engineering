@@ -6,8 +6,13 @@ function sleep(ms) {
 
 export const gemini = { callGemini };
 
+// A pinned model, not the "-latest" alias: live testing found the alias
+// itself overloaded (requests hung indefinitely) while this exact model
+// responded in ~1s. Still overridable via env, so swapping models later
+// (newer version, or back to an alias once it's not the overload target)
+// is a config change, not a code change.
 async function callGemini(systemPrompt, userMessage, env) {
-  const model = env.GEMINI_MODEL || 'gemini-flash-latest';
+  const model = env.GEMINI_MODEL || 'gemini-2.5-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEMINI_API_KEY}`;
   const body = JSON.stringify({
     systemInstruction: { parts: [{ text: systemPrompt }] },

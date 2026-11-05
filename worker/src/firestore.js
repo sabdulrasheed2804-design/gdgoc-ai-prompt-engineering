@@ -63,7 +63,12 @@ export function fromFirestoreFields(document) {
 }
 
 export function makeFirestoreClient(serviceAccount) {
+  // The HTTP request base (used to build fetch() URLs) vs. the bare
+  // resource-name base Firestore's write API expects in a document's
+  // `name` field -- these are different strings, not the same value with
+  // a prefix stripped, so both need to exist here.
   const base = `https://firestore.googleapis.com/v1/projects/${serviceAccount.project_id}/databases/(default)/documents`;
+  const resourceBase = `projects/${serviceAccount.project_id}/databases/(default)/documents`;
 
   async function authedFetch(path, init = {}) {
     const token = await getAccessToken(serviceAccount);
@@ -108,7 +113,7 @@ export function makeFirestoreClient(serviceAccount) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           transaction,
-          writes: [{ update: { name: `${base}/${path}`, ...toFirestoreFields(next) } }],
+          writes: [{ update: { name: `${resourceBase}/${path}`, ...toFirestoreFields(next) } }],
         }),
       });
       if (!commitRes.ok) throw new Error(`Firestore commit failed: ${commitRes.status} ${await commitRes.text()}`);
