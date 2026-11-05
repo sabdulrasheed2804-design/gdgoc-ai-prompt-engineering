@@ -1,11 +1,6 @@
 import { submitLab } from './grading-client.js';
 import { recordLabRun } from './store.js';
-
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  }[c]));
-}
+import { escapeHtml } from './util.js';
 
 export function renderRoadmap(mountEl, weeks) {
   const cards = weeks
