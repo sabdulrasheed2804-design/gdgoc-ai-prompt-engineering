@@ -1,0 +1,19 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /members/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /labRuns/{labRunId} {
+      allow read: if request.auth != null && resource.data.memberId == request.auth.uid;
+      allow write: if false; // written only by the gradeLab Cloud Function's service account
+    }
+
+    match /apiUsage/{uid} {
+      allow read, write: if false; // written only by the gradeLab Cloud Function's service account
+    }
+  }
+}
