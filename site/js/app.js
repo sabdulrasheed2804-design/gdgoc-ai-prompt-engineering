@@ -16,10 +16,15 @@ const startedOnPublicRoute = window.location.hash.startsWith(PUBLIC_PORTFOLIO_PR
 
 // A hash-only change (e.g. a signed-in member typing a #public/<uid> link into
 // the address bar, or vice versa) never reloads the page, so the one-time
-// check below would never re-run. Force a real reload when crossing that
-// boundary, so the public-vs-signed-in branch always reflects the current URL.
+// check below would never re-run. There's also no router in public mode, so
+// going from one #public/<uid> straight to another #public/<otherUid> (a
+// link, the back button, or editing the address bar) needs the same forced
+// reload, not just the boundary crossing. Reload whenever either the current
+// or the destination hash is a public route, which covers both cases and
+// leaves ordinary in-app navigation (dashboard/roadmap/portfolio hashes)
+// alone for the router to handle.
 window.addEventListener('hashchange', () => {
-  if (window.location.hash.startsWith(PUBLIC_PORTFOLIO_PREFIX) !== startedOnPublicRoute) {
+  if (startedOnPublicRoute || window.location.hash.startsWith(PUBLIC_PORTFOLIO_PREFIX)) {
     window.location.reload();
   }
 });
@@ -61,7 +66,8 @@ if (startedOnPublicRoute) {
   async function renderPortfolioRoute(mountEl, isStale) {
     const entries = await getPortfolioEntries(currentMember.uid);
     if (isStale()) return;
-    renderPortfolioManager(mountEl, entries);
+    const publicUrl = `${window.location.origin}${window.location.pathname}#public/${currentMember.uid}`;
+    renderPortfolioManager(mountEl, entries, { publicUrl });
     wirePortfolioToggles(mountEl, currentMember.uid, () => router.refresh());
   }
 

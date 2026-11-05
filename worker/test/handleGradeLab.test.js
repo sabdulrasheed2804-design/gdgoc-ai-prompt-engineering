@@ -107,3 +107,30 @@ test('does not write a portfolio entry for a failing submission', async () => {
 
   assert.equal(firestore.store.docs['portfolio/u6/entries/1'], undefined);
 });
+
+test('derives week from labId on the server, ignoring a client-supplied week', async () => {
+  const firestore = makeFakeFirestore();
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+
+  await handleGradeLab({ uid: 'u8', week: 7, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
+
+  assert.equal(firestore.store.labRuns[0].week, 1);
+  assert.ok(firestore.store.docs['portfolio/u8/entries/1']);
+  assert.equal(firestore.store.docs['portfolio/u8/entries/7'], undefined);
+});
+
+test('still charges tokens and returns a result even if the portfolio write fails', async () => {
+  const firestore = makeFakeFirestore();
+  const originalTransactionalUpdate = firestore.transactionalUpdate.bind(firestore);
+  firestore.transactionalUpdate = async (path, computeNext) => {
+    if (path.startsWith('portfolio/')) throw new Error('simulated Firestore failure');
+    return originalTransactionalUpdate(path, computeNext);
+  };
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+
+  const result = await handleGradeLab({ uid: 'u9', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
+
+  assert.equal(result.passed, true);
+  assert.equal(firestore.store.docs['apiUsage/u9'].tokensToday, 30);
+  assert.equal(firestore.store.docs['portfolio/u9/entries/1'], undefined);
+});

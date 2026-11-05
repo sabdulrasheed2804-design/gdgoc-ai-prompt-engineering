@@ -1,6 +1,6 @@
 import { verifyIdToken, AuthError } from './auth.js';
 import { makeFirestoreClient } from './firestore.js';
-import { evaluateSubmission, ValidationError } from './grading.js';
+import { evaluateSubmission, ValidationError, WEEK_BY_LAB_ID } from './grading.js';
 
 const DAILY_TOKEN_CAP = 50000;
 
@@ -21,7 +21,7 @@ function todayString() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export async function handleGradeLab({ uid, week, labId, promptText }, env, firestore) {
+export async function handleGradeLab({ uid, labId, promptText }, env, firestore) {
   const usagePath = `apiUsage/${uid}`;
   const existingUsage = await firestore.getDocument(usagePath);
   const today = todayString();
@@ -46,6 +46,24 @@ export async function handleGradeLab({ uid, week, labId, promptText }, env, fire
     throw wrapped;
   }
 
+  // Derived from labId, never from the client's request -- a client-supplied
+  // week would let a member fabricate a passing entry for a week its own
+  // labId doesn't belong to, which then becomes publicly visible once
+  // published.
+  const week = WEEK_BY_LAB_ID[labId];
+
+  // Charge tokens before any other write: Gemini has already been called and
+  // the cost already incurred, so the daily cap must reflect it even if a
+  // later write (labRuns, portfolio) fails.
+  await firestore.transactionalUpdate(usagePath, (current) => {
+    const currentTokensToday = current && current.lastResetDate === today ? current.tokensToday : 0;
+    return {
+      tokensToday: currentTokensToday + result.tokensUsed,
+      tokensTotal: (current?.tokensTotal ?? 0) + result.tokensUsed,
+      lastResetDate: today,
+    };
+  });
+
   await firestore.createDocument('labRuns', {
     memberId: uid,
     week,
@@ -58,25 +76,23 @@ export async function handleGradeLab({ uid, week, labId, promptText }, env, fire
   });
 
   if (result.passed) {
-    await firestore.transactionalUpdate(`portfolio/${uid}/entries/${week}`, (current) => {
-      if (current && current.rubricScore >= result.score) return current;
-      return {
-        promptText,
-        outputSnippet: result.sampleOutput,
-        rubricScore: result.score,
-        published: current?.published ?? false,
-      };
-    });
+    // Best-effort: the portfolio entry is a promotional derivative of the
+    // labRuns record above, not the source of truth. A member who passed a
+    // lab must get their result even if this write fails.
+    try {
+      await firestore.transactionalUpdate(`portfolio/${uid}/entries/${week}`, (current) => {
+        if (current && current.rubricScore >= result.score) return current;
+        return {
+          promptText,
+          outputSnippet: result.sampleOutput,
+          rubricScore: result.score,
+          published: current?.published ?? false,
+        };
+      });
+    } catch (err) {
+      console.error('failed to upsert portfolio entry', err);
+    }
   }
-
-  await firestore.transactionalUpdate(usagePath, (current) => {
-    const currentTokensToday = current && current.lastResetDate === today ? current.tokensToday : 0;
-    return {
-      tokensToday: currentTokensToday + result.tokensUsed,
-      tokensTotal: (current?.tokensTotal ?? 0) + result.tokensUsed,
-      lastResetDate: today,
-    };
-  });
 
   return { passed: result.passed, score: result.score, feedback: result.feedback };
 }
@@ -112,7 +128,7 @@ export default {
     const firestore = makeFirestoreClient(serviceAccount);
     try {
       const result = await handleGradeLab(
-        { uid, week: payload.week, labId: payload.labId, promptText: payload.promptText },
+        { uid, labId: payload.labId, promptText: payload.promptText },
         env,
         firestore
       );

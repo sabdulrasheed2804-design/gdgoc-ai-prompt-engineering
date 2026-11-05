@@ -1,12 +1,17 @@
 import { escapeHtml } from './util.js';
 import { setPortfolioPublished } from './store.js';
 
-export function renderPortfolioManager(mountEl, entries) {
+export function renderPortfolioManager(mountEl, entries, { publicUrl } = {}) {
+  const shareBlock = publicUrl
+    ? `<p class="portfolio-share">Your public page: <a href="${escapeHtml(publicUrl)}">${escapeHtml(publicUrl)}</a></p>`
+    : '';
+
   if (entries.length === 0) {
-    mountEl.innerHTML = '<p class="empty-state">You have no passing lab submissions yet — pass a lab to start building your portfolio.</p>';
+    mountEl.innerHTML = `${shareBlock}<p class="empty-state">You have no passing lab submissions yet — pass a lab to start building your portfolio.</p>`;
     return;
   }
   mountEl.innerHTML = `
+    ${shareBlock}
     <div class="portfolio-list">
       ${entries
         .sort((a, b) => a.week - b.week)

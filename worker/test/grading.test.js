@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { gemini } from '../src/gemini.js';
-import { evaluateSubmission, ValidationError, matchesSchema } from '../src/grading.js';
+import { evaluateSubmission, ValidationError, matchesSchema, WEEK_BY_LAB_ID } from '../src/grading.js';
 import RUBRICS from '../src/rubrics.json' with { type: 'json' };
 import { WEEKS } from '../../site/js/data.js';
 
@@ -99,6 +99,11 @@ test('w7-agent-lab passes a correctly-shaped response', async () => {
   test.mock.method(gemini, 'callGemini', async () => ({ text: '{"plan":"...","result":"..."}', tokensUsed: 11 }));
   const result = await evaluateSubmission({ labId: 'w7-agent-lab', promptText: 'an agent-planning prompt' }, FAKE_ENV);
   assert.equal(result.passed, true);
+});
+
+test('WEEK_BY_LAB_ID maps every lab id to its correct week number', () => {
+  assert.equal(WEEK_BY_LAB_ID['w1-json-lab'], 1);
+  assert.equal(WEEK_BY_LAB_ID['w7-agent-lab'], 7);
 });
 
 test('every week with a lab has a matching rubric entry with exactly 3 test cases', () => {

@@ -263,6 +263,17 @@ body {
   font-weight: 600;
 }
 
+.portfolio-share {
+  margin: 0 0 20px;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+.portfolio-share a {
+  color: var(--color-blue);
+}
+
 .portfolio-list {
   display: flex;
   flex-direction: column;

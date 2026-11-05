@@ -20,6 +20,12 @@ test('renderPortfolioManager shows an empty state with no entries', () => {
   assert.match(el.innerHTML, /no passing lab/i);
 });
 
+test("renderPortfolioManager shows the member's shareable public URL when given one", () => {
+  const el = { innerHTML: '' };
+  renderPortfolioManager(el, [], { publicUrl: 'http://example.com/index.html#public/u1' });
+  assert.match(el.innerHTML, /http:\/\/example\.com\/index\.html#public\/u1/);
+});
+
 test('renderPublicPortfolio escapes prompt text', () => {
   const el = { innerHTML: '' };
   renderPublicPortfolio(el, [{ week: 1, promptText: '<script>', outputSnippet: 'o', rubricScore: 1 }]);
