@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { renderPortfolioManager, renderPublicPortfolio } from './portfolio.js';
+import { renderPortfolioManager, renderPublicPortfolio, toggleAndReport } from './portfolio.js';
 
 test("renderPortfolioManager shows each entry's week, score, and publish state", () => {
   const el = { innerHTML: '' };
@@ -30,4 +30,21 @@ test('renderPublicPortfolio shows an empty state with no published entries', () 
   const el = { innerHTML: '' };
   renderPublicPortfolio(el, []);
   assert.match(el.innerHTML, /hasn.t published/i);
+});
+
+test('toggleAndReport reports ok on a successful write', async () => {
+  const result = await toggleAndReport({
+    setPortfolioPublished: async () => {},
+    uid: 'u1', week: 1, nextPublished: true,
+  });
+  assert.equal(result.ok, true);
+});
+
+test('toggleAndReport reports the error message instead of throwing when the write fails', async () => {
+  const result = await toggleAndReport({
+    setPortfolioPublished: async () => { throw new Error('Missing or insufficient permissions.'); },
+    uid: 'u1', week: 1, nextPublished: true,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'Missing or insufficient permissions.');
 });

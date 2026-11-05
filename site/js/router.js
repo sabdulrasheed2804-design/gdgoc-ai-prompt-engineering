@@ -10,7 +10,8 @@ export function createRunner(routes, fallback) {
     const key = resolveRoute(routes, hash, fallback);
     try {
       await routes[key](mountEl, () => id !== seq);
-    } catch {
+    } catch (err) {
+      console.error(`route "${key}" failed to render`, err);
       if (id === seq) mountEl.innerHTML = '<p class="route-error">Couldn\'t load this page. Please refresh.</p>';
     }
     return { key, stale: id !== seq };

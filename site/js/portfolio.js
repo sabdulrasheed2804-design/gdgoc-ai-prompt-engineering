@@ -30,13 +30,27 @@ export function renderPortfolioManager(mountEl, entries) {
   `;
 }
 
+export async function toggleAndReport({ setPortfolioPublished, uid, week, nextPublished }) {
+  try {
+    await setPortfolioPublished(uid, week, nextPublished);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
 export function wirePortfolioToggles(mountEl, uid, onToggled) {
   mountEl.querySelectorAll('[data-toggle-publish]').forEach((button) => {
     button.addEventListener('click', async () => {
       const week = Number(button.dataset.week);
       const nextPublished = button.textContent.trim() === 'Publish';
       button.disabled = true;
-      await setPortfolioPublished(uid, week, nextPublished);
+      const result = await toggleAndReport({ setPortfolioPublished, uid, week, nextPublished });
+      if (!result.ok) {
+        console.error('failed to update portfolio publish state', result.error);
+        button.disabled = false;
+        return;
+      }
       onToggled?.();
     });
   });
