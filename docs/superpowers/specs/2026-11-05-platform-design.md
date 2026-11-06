@@ -163,13 +163,20 @@ review completed earns a small XP amount (to incentivize timely reviews,
 mirroring the journal-day XP InfraTrack already uses for a different
 habit).
 
-**Build independently, don't fork InfraTrack's code.** Its repo has no
-license file (`license: null` in its metadata) — all-rights-reserved by
-default — so copying it isn't safe to assume just because you're both in
-GDGoC. We rebuild the same shape from scratch as our own repo. Worth a
-quick, no-pressure message to Usman anyway: if he's happy for you to
-reuse the code directly, or to add a license, that could save real time
-later — but the plan doesn't depend on his answer.
+**Reuse InfraTrack's code directly where this design says "reused as-is."**
+Usman gave explicit permission (2026-11-06) to fork and adapt InfraTrack's
+code, resolving the licensing concern this section originally raised (its
+repo still carries no license file, so that permission — not an assumed
+GDGoC courtesy — is what makes reuse safe). Forked to
+`sabdulrasheed2804-design/gdgoc-infrastrucure` for reference. Where a
+piece needs real changes to fit this repo's data model (e.g. the admin
+dashboard reading `labRuns`/`apiUsage` instead of self-ticked progress,
+or `firestore.rules`' auth-integrity differences — see
+`docs/superpowers/plans/2026-11-06-standard-gap-roadmap.md`), adapt
+rather than copy wholesale; InfraTrack's own `app.js` is a single
+106KB non-module file, and this repo's existing convention (ES modules,
+one concern per file, unit-tested) takes precedence over matching its
+shape exactly.
 
 **Portfolio publication is opt-in, not automatic.** The proxy flags a
 submission as "portfolio-worthy" when it scores well, but publishing it
