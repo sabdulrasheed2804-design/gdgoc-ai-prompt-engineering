@@ -2,7 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Run site tests
+        run: node --test site/js/*.test.mjs
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
