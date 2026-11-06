@@ -1,6 +1,6 @@
 # Prompt Portfolio Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Give each member a public, shareable page showing their best-scoring
 prompt per week, opt-in per entry — the "prompt portfolio" the design doc
@@ -73,7 +73,7 @@ publication is opt-in, not automatic."
   on (public read of published entries; owner-only read of all their own
   entries; owner-only write, restricted to the `published` field).
 
-- [ ] **Step 1: Add the `portfolio` match block**
+- [x] **Step 1: Add the `portfolio` match block**
 
 ```
 match /portfolio/{memberId}/entries/{week} {
@@ -85,7 +85,7 @@ match /portfolio/{memberId}/entries/{week} {
 }
 ```
 
-- [ ] **Step 2: Deploy the updated rules**
+- [x] **Step 2: Deploy the updated rules**
 
 This is the one step in this plan that touches shared infrastructure, not
 just this worktree — publish `firestore.rules`' new content via the
@@ -98,7 +98,14 @@ rules), so Task 2 can proceed even before this step is manually completed.
 Expected: the Firebase console's Rules tab shows the new `portfolio` block
 after publishing, with no syntax errors reported by its validator.
 
-- [ ] **Step 3: Commit**
+**Deployed 2026-11-06** via `firebase deploy --only firestore:rules
+--project gdgoc-prompt-eng` (ran under the user's own Firebase login, not
+the console UI — same end effect). Rules compiled and released
+successfully; verified live by loading `#public/<uid>` for an uid with no
+entries in Task 5 Step 6 and getting the correct empty state with no
+permission errors.
+
+- [x] **Step 3: Commit**
 
 ```bash
 git add firestore.rules
@@ -124,7 +131,7 @@ git commit -m "feat: add Firestore rules for the portfolio collection"
   string` field (the first test case's raw model response text) alongside
   the existing `passed`/`score`/`feedback`/`tokensUsed`.
 
-- [ ] **Step 1: Fix `makeFakeFirestore`'s path-keying bug in
+- [x] **Step 1: Fix `makeFakeFirestore`'s path-keying bug in
   `handleGradeLab.test.js`, before adding new behavior**
 
 The existing fake's `transactionalUpdate` extracts a uid with
@@ -167,7 +174,7 @@ new shape. This step changes no production code, only the test fixture;
 there is no RED step here, since nothing about `handleGradeLab`'s behavior
 is new yet. (The TDD cycle resumes at Step 2.)
 
-- [ ] **Step 2: Write the failing `evaluateSubmission` test**
+- [x] **Step 2: Write the failing `evaluateSubmission` test**
 
 ```js
 test('evaluateSubmission returns a sample output alongside the score', async () => {
@@ -177,25 +184,25 @@ test('evaluateSubmission returns a sample output alongside the score', async () 
 });
 ```
 
-- [ ] **Step 3: Run it to verify it fails**
+- [x] **Step 3: Run it to verify it fails**
 
 Run: `node --test worker/test/grading.test.js`
 Expected: FAIL — `result.sampleOutput` is `undefined`.
 
-- [ ] **Step 4: Add `sampleOutput` to `evaluateSubmission`'s return value**
+- [x] **Step 4: Add `sampleOutput` to `evaluateSubmission`'s return value**
 
 Capture the `text` from the *first* test case's Gemini call (the loop
 already runs each test case in order; keep the first iteration's `text` in
 a variable alongside the existing `matchCount`/`tokensUsed` accumulation)
 and include it as `sampleOutput` in the returned object.
 
-- [ ] **Step 5: Run it to verify it passes, plus the full grading suite**
+- [x] **Step 5: Run it to verify it passes, plus the full grading suite**
 
 Run: `node --test worker/test/grading.test.js`
 Expected: PASS, all tests (the new one plus the existing ones — adding a
 field doesn't change any existing assertion's target).
 
-- [ ] **Step 6: Write the failing `handleGradeLab` portfolio tests**
+- [x] **Step 6: Write the failing `handleGradeLab` portfolio tests**
 
 ```js
 test('writes a portfolio entry on a first passing submission', async () => {
@@ -232,13 +239,13 @@ test('does not write a portfolio entry for a failing submission', async () => {
 });
 ```
 
-- [ ] **Step 7: Run them to verify they fail**
+- [x] **Step 7: Run them to verify they fail**
 
 Run: `node --test worker/test/handleGradeLab.test.js`
 Expected: FAIL — no portfolio entries are written yet (`entry` is
 `undefined` in the first two tests).
 
-- [ ] **Step 8: Implement the upsert in `handleGradeLab`**
+- [x] **Step 8: Implement the upsert in `handleGradeLab`**
 
 After the existing `labRuns` write, when `result.passed` is true:
 
@@ -255,19 +262,19 @@ await firestore.transactionalUpdate(portfolioPath, (current) => {
 });
 ```
 
-- [ ] **Step 9: Run tests to verify they pass, plus the full worker suite**
+- [x] **Step 9: Run tests to verify they pass, plus the full worker suite**
 
 Run: `node --test worker/test/*.test.js`
 Expected: PASS, all tests.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add worker/src/grading.js worker/src/index.js worker/test/grading.test.js worker/test/handleGradeLab.test.js
 git commit -m "feat: upsert a portfolio entry on a passing, higher-scoring lab submission"
 ```
 
-- [ ] **Step 11: Build and redeploy the Worker**
+- [x] **Step 11: Build and redeploy the Worker**
 
 This plan changes `worker/src/`, so the live Worker needs rebuilding and
 redeploying the same way prior plans' Worker changes were (esbuild bundle,
@@ -278,6 +285,11 @@ same gap a prior plan's final review caught for the rubric additions.
 Run: `cd worker && npm run build && grep -c portfolio dist/index.js`
 Expected: a non-zero count, confirming the new code is in the bundle
 before deploying.
+
+**Deployed 2026-11-06** via the new `worker/deploy-worker.sh` (committed
+separately), confirmed `grep -c portfolio dist/index.js` → 3 beforehand,
+and the Cloudflare API returned `"success": true` with `modified_on`
+updated to the deploy time.
 
 ---
 
@@ -301,7 +313,7 @@ Local mode needs its own in-memory shape for these three functions, same
 pattern as `memoryStore.labRuns`: add `memoryStore.portfolio = {}` keyed
 by `` `${uid}/${week}` ``.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 test('getPortfolioEntries returns only the given member\'s entries, in local mode', async () => {
@@ -326,12 +338,12 @@ content, so these tests only exercise the publish-flag plumbing, not
 real prompt content. Add these two tests and their imports to the existing
 `site/js/store.test.mjs`.)
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `node --test site/js/store.test.mjs`
 Expected: FAIL — the three functions aren't exported yet.
 
-- [ ] **Step 3: Implement the three functions in `site/js/store.js`**
+- [x] **Step 3: Implement the three functions in `site/js/store.js`**
 
 Local mode: `memoryStore.portfolio[`${uid}/${week}`]`, created with
 `published: false` and empty content fields if `setPortfolioPublished` is
@@ -349,12 +361,12 @@ rule for the owner's own entries that already have content fields);
 by an unauthenticated caller since the rule's first clause needs no
 `request.auth`.
 
-- [ ] **Step 4: Run tests to verify they pass, plus the full store suite**
+- [x] **Step 4: Run tests to verify they pass, plus the full store suite**
 
 Run: `node --test site/js/store.test.mjs`
 Expected: PASS, all tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add site/js/store.js site/js/store.test.mjs
@@ -384,7 +396,7 @@ git commit -m "feat: add store functions for portfolio entries"
   Array<{week, promptText, outputSnippet, rubricScore}>): void` — the
   read-only public view (Task 5 also uses this).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 import { test } from 'node:test';
@@ -422,12 +434,12 @@ test('renderPublicPortfolio shows an empty state with no published entries', () 
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `node --test site/js/portfolio.test.mjs`
 Expected: FAIL — `portfolio.js` does not exist.
 
-- [ ] **Step 3: Implement `site/js/portfolio.js`**
+- [x] **Step 3: Implement `site/js/portfolio.js`**
 
 `renderPortfolioManager`: a `.portfolio-list` of `.portfolio-row`s (week
 number, truncated prompt/output, rubric score as a percentage, a
@@ -440,12 +452,12 @@ similar list without toggle buttons, empty-state text mentioning the
 member "hasn't published" anything yet when `entries` is empty. All
 user-controlled text through `escapeHtml`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `node --test site/js/portfolio.test.mjs`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add site/js/portfolio.js site/js/portfolio.test.mjs
@@ -467,14 +479,14 @@ git commit -m "feat: add portfolio manager and public portfolio views"
   `wirePortfolioToggles`/`renderPublicPortfolio` (Task 4); `initRouter`
   (existing, from the router/dashboard plan).
 
-- [ ] **Step 1: Add a "Portfolio" nav link to `site/index.html`**
+- [x] **Step 1: Add a "Portfolio" nav link to `site/index.html`**
 
 ```html
 <a href="#portfolio" data-route="portfolio">Portfolio</a>
 ```
 (third link in `#main-nav`, after Dashboard and Roadmap).
 
-- [ ] **Step 2: Handle the public page before the sign-in gate in `app.js`**
+- [x] **Step 2: Handle the public page before the sign-in gate in `app.js`**
 
 At the top of `app.js`, before `warmUp()`/`onAuthChange` run, check
 `window.location.hash.startsWith('#public/')`. If so: extract the uid
@@ -489,7 +501,7 @@ guard, or an early-return inside an `async function main() { ... }`
 invoked at the bottom, whichever keeps the diff smaller against the
 current flat module-scope code).
 
-- [ ] **Step 3: Add the `portfolio` route to the signed-in router**
+- [x] **Step 3: Add the `portfolio` route to the signed-in router**
 
 ```js
 async function renderPortfolioRoute(mountEl, isStale) {
@@ -502,7 +514,7 @@ async function renderPortfolioRoute(mountEl, isStale) {
 Add `portfolio: renderPortfolioRoute` to the `routes` object passed to
 `initRouter`.
 
-- [ ] **Step 4: Add portfolio list styles to `site/css/styles.css`**
+- [x] **Step 4: Add portfolio list styles to `site/css/styles.css`**
 
 A `.portfolio-list` of `.portfolio-row`s styled consistently with
 `.week-card`/`.stat-card` (reuse `--color-surface`/`--color-border`,
@@ -510,12 +522,12 @@ don't invent a third card style); a small pill-style label for
 "Published" (use `--color-green`) vs. "Unpublished" (use
 `--color-text-muted`).
 
-- [ ] **Step 5: Run the full site test suite**
+- [x] **Step 5: Run the full site test suite**
 
 Run: `node --test site/js/*.test.mjs`
 Expected: PASS, all files.
 
-- [ ] **Step 6: Manual verification in a browser**
+- [x] **Step 6: Manual verification in a browser**
 
 Serve `site/` locally. Signed in: confirm the Portfolio nav link shows the
 empty state for a member with no passing labs; after seeding a local-mode
@@ -529,7 +541,18 @@ that same uid (seeded in the same local-mode session) does not appear.
 
 Expected: all of the above hold; no console errors.
 
-- [ ] **Step 7: Commit**
+**Verified 2026-11-06:** served `site/` locally against the live
+`gdgoc-prompt-eng` project (rules + Worker redeployed same day). Confirmed
+signed-out: `#public/<uid-with-no-entries>` shows the "hasn't published"
+empty state with sign-in/nav hidden and no console errors; the normal
+sign-in gate is unaffected by the public-route guard. Did **not** verify
+the signed-in manager view (empty state, local-mode entry seeding, publish
+toggle) — no test Google account available in this environment. That path
+is covered by `site/js/portfolio.test.mjs` and `site/js/store.test.mjs`
+unit tests; a human with cluster sign-in access should still spot-check it
+once.
+
+- [x] **Step 7: Commit**
 
 ```bash
 git add site/js/app.js site/index.html site/css/styles.css
