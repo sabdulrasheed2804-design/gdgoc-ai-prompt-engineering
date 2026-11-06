@@ -15,5 +15,13 @@ service cloud.firestore {
     match /apiUsage/{uid} {
       allow read, write: if false; // written only by the gradeLab Cloud Function's service account
     }
+
+    match /portfolio/{memberId}/entries/{week} {
+      allow read: if resource.data.published == true
+        || (request.auth != null && request.auth.uid == memberId);
+      allow update: if request.auth != null && request.auth.uid == memberId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['published']);
+      allow create: if false; // entries are created by the grading Worker's service account only
+    }
   }
 }

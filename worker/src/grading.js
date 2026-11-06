@@ -1,7 +1,15 @@
 import RUBRICS from './rubrics.json' with { type: 'json' };
 import { gemini } from './gemini.js';
+import { WEEKS } from '../../site/js/data.js';
 
 const MAX_PROMPT_LENGTH = 4000;
+
+// Derived server-side from the curriculum data, never from client input --
+// a submission's week is whichever week owns its labId, not whatever the
+// client's request body claims.
+export const WEEK_BY_LAB_ID = Object.fromEntries(
+  WEEKS.filter((w) => w.lab).map((w) => [w.lab.id, w.week])
+);
 
 export class ValidationError extends Error {}
 
@@ -39,10 +47,12 @@ export async function evaluateSubmission({ labId, promptText }, env) {
 
   let tokensUsed = 0;
   let matchCount = 0;
+  let sampleOutput;
 
   for (const testCase of testCases) {
     const { text, tokensUsed: used } = await gemini.callGemini(promptText, testCase.question, env);
     tokensUsed += used;
+    if (sampleOutput === undefined) sampleOutput = text;
     if (matchesSchema(text, schema)) matchCount += 1;
   }
 
@@ -56,5 +66,6 @@ export async function evaluateSubmission({ labId, promptText }, env) {
       ? 'All test questions returned valid matching JSON.'
       : `${matchCount}/${testCases.length} test questions returned valid matching JSON.`,
     tokensUsed,
+    sampleOutput,
   };
 }
