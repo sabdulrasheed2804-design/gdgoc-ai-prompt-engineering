@@ -126,3 +126,25 @@ test('renders upgraded resource cards with type, time, takeaway and essential ba
   assert.match(el.innerHTML, /📄 Paper/);
   assert.match(el.innerHTML, /Deep Dive/);
 });
+
+test('an upcoming week collapses its lab/quiz/resources behind a details disclosure', () => {
+  const el = { innerHTML: '' };
+  renderRoadmap(el, [{
+    week: 2, title: 'Later', objectives: 'x', milestone: 'm', status: 'upcoming', scheduledDate: '2026-12-01',
+    lab: { id: 'w2-lab', prompt: 'p' },
+  }]);
+  assert.match(el.innerHTML, /<details class="week-card__preview">/);
+  assert.match(el.innerHTML, /Opens 2026-12-01/);
+  const detailsBody = el.innerHTML.split('<details')[1];
+  assert.match(detailsBody, /data-lab-form/);
+});
+
+test('a current week renders its lab form open, not behind details', () => {
+  const el = { innerHTML: '' };
+  renderRoadmap(el, [{
+    week: 1, title: 'Now', objectives: 'x', milestone: 'm', status: 'current',
+    lab: { id: 'w1-lab', prompt: 'p' },
+  }]);
+  assert.doesNotMatch(el.innerHTML, /<details/);
+  assert.match(el.innerHTML, /📍 This week/);
+});

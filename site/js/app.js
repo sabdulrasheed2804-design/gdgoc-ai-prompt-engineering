@@ -21,6 +21,8 @@ import { buildActivityMap, renderJournalView, wireJournalForm } from './journal.
 import { renderCertificateView, renderPublicCertificateVerification, wireCertificateView } from './certificates.js';
 import { renderPlayground, wirePlayground } from './playground.js';
 import { WEEKS } from './data.js';
+import { PROGRAM } from './config.js';
+import { annotateWeekStatus } from './pacing.js';
 
 const signInButton = document.getElementById('sign-in');
 const appEl = document.getElementById('app');
@@ -118,7 +120,9 @@ if (startedOnPublicRoute) {
     const milestonesByWeek = {};
     for (const m of milestones) milestonesByWeek[m.week] = m;
 
-    renderRoadmap(mountEl, WEEKS, { milestonesByWeek });
+    const today = new Date().toISOString().slice(0, 10);
+    const pacedWeeks = annotateWeekStatus(WEEKS, { weekStart: PROGRAM.weekStart, today });
+    renderRoadmap(mountEl, pacedWeeks, { milestonesByWeek });
     wireLabForms(mountEl, currentMember.uid);
     wireQuiz(mountEl);
     wireMilestoneForms(mountEl, {

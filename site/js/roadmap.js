@@ -108,14 +108,69 @@ export function renderResources(resources) {
   `;
 }
 
+function renderStatusBadge(w) {
+  if (w.status === 'current') return '<span class="badge badge--current-week">📍 This week</span>';
+  if (w.status === 'upcoming') return `<span class="badge badge--upcoming">🔒 Opens ${escapeHtml(w.scheduledDate)}</span>`;
+  return '';
+}
+
+// The lab challenge and quiz are the two heaviest, most attention-grabbing
+// blocks on a card -- for an upcoming week they're wrapped in a closed
+// <details> disclosure instead of rendered open, so the roadmap shows this
+// week prominently rather than all 8 weeks fully expanded at once. A
+// motivated member can still expand ahead; nothing is hard-blocked, same
+// non-blocking pacing InfraTrack itself uses (it marks future modules
+// "Upcoming" rather than hiding them).
+function renderWeekBody(w, milestonesByWeek) {
+  const labBox = w.lab ? `
+    <div class="week-card__lab-box">
+      <div class="lab-box__header">
+        <span class="lab-box__title">🧪 Graded Prompt Challenge</span>
+        <span class="badge badge--server">Gemini Evaluated</span>
+      </div>
+      <p class="week-card__lab"><strong>Lab:</strong> ${escapeHtml(w.lab.prompt)}</p>
+      <form class="lab-form" data-lab-form data-lab-id="${w.lab.id}">
+        <div class="lab-editor">
+          <div class="lab-editor__bar">
+            <div class="lab-editor__dots">
+              <span class="editor-dot"></span>
+              <span class="editor-dot"></span>
+              <span class="editor-dot"></span>
+            </div>
+            <span class="lab-editor__filename">system_prompt.txt</span>
+          </div>
+          <textarea class="lab-form__input" data-lab-input rows="5" placeholder="Write your system prompt here..."></textarea>
+        </div>
+        <div class="lab-form__actions">
+          <button class="btn btn--primary" type="submit">Submit lab</button>
+          <span class="lab-form__note">Server validates output against schema</span>
+        </div>
+        <p class="lab-form__result" data-lab-result></p>
+      </form>
+    </div>
+  ` : '';
+
+  const body = `
+    ${renderMilestoneBox({ week: w.week, milestoneDesc: w.milestone, submission: milestonesByWeek[w.week] })}
+    ${labBox}
+    ${w.quiz ? renderQuiz(w.quiz) : ''}
+    ${renderResources(w.resources)}
+  `;
+
+  return w.status === 'upcoming'
+    ? `<details class="week-card__preview"><summary>Preview this week's lab, quiz and resources</summary>${body}</details>`
+    : body;
+}
+
 export function renderRoadmap(mountEl, weeks, { milestonesByWeek = {} } = {}) {
   const cards = weeks
     .map((w) => `
-      <section class="week-card" data-week="${w.week}">
+      <section class="week-card week-card--${w.status || 'current'}" data-week="${w.week}">
         <div class="week-card__head">
           <div class="week-card__badge-row">
             <span class="week-card__num">Week ${w.week}</span>
             ${w.lab ? '<span class="badge badge--lab">Lab Track</span>' : '<span class="badge badge--capstone">Capstone Sprint</span>'}
+            ${renderStatusBadge(w)}
           </div>
           <h2 class="week-card__title">${escapeHtml(w.title)}</h2>
         </div>
@@ -131,39 +186,7 @@ export function renderRoadmap(mountEl, weeks, { milestonesByWeek = {} } = {}) {
 
         ${renderPromptComparison(w.promptComparison, w.week)}
 
-        ${renderMilestoneBox({ week: w.week, milestoneDesc: w.milestone, submission: milestonesByWeek[w.week] })}
-
-        ${w.lab ? `
-          <div class="week-card__lab-box">
-            <div class="lab-box__header">
-              <span class="lab-box__title">🧪 Graded Prompt Challenge</span>
-              <span class="badge badge--server">Gemini Evaluated</span>
-            </div>
-            <p class="week-card__lab"><strong>Lab:</strong> ${escapeHtml(w.lab.prompt)}</p>
-            <form class="lab-form" data-lab-form data-lab-id="${w.lab.id}">
-              <div class="lab-editor">
-                <div class="lab-editor__bar">
-                  <div class="lab-editor__dots">
-                    <span class="editor-dot"></span>
-                    <span class="editor-dot"></span>
-                    <span class="editor-dot"></span>
-                  </div>
-                  <span class="lab-editor__filename">system_prompt.txt</span>
-                </div>
-                <textarea class="lab-form__input" data-lab-input rows="5" placeholder="Write your system prompt here..."></textarea>
-              </div>
-              <div class="lab-form__actions">
-                <button class="btn btn--primary" type="submit">Submit lab</button>
-                <span class="lab-form__note">Server validates output against schema</span>
-              </div>
-              <p class="lab-form__result" data-lab-result></p>
-            </form>
-          </div>
-        ` : ''}
-
-        ${w.quiz ? renderQuiz(w.quiz) : ''}
-
-        ${renderResources(w.resources)}
+        ${renderWeekBody(w, milestonesByWeek)}
       </section>
     `)
     .join('');
