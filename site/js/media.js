@@ -5,6 +5,12 @@ export function drawCertificate(canvas, {
   certId = 'GDGOC-AI-CERT',
   issueDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
   faculty = 'Computer Science & Engineering',
+  // Matches certificates.js's buildLinkedInCertUrl/#cert link construction
+  // exactly -- origin + pathname, not just the host, since GitHub Pages
+  // project sites serve from a /<repo-name>/ subpath.
+  siteUrl = (typeof window !== 'undefined'
+    ? `${window.location.origin}${window.location.pathname}`
+    : 'https://sabdulrasheed2804-design.github.io/gdgoc-ai-prompt-engineering/'),
 } = {}) {
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext('2d');
@@ -177,7 +183,8 @@ export function drawCertificate(canvas, {
   ctx.fillText(`CREDENTIAL ID: ${certId}   ·   ISSUED: ${issueDate.toUpperCase()}`, centerX, 970);
   ctx.fillStyle = '#5f6368';
   ctx.font = '400 13px "JetBrains Mono", monospace';
-  ctx.fillText('VERIFY ONLINE: gdgoc-ai.pages.dev/#cert/' + certId, centerX, 995);
+  const displayHost = siteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  ctx.fillText(`VERIFY ONLINE: ${displayHost}/#cert/${certId}`, centerX, 995);
 }
 
 export function drawSpotlightFlyer(canvas, {
@@ -185,6 +192,9 @@ export function drawSpotlightFlyer(canvas, {
   topicTitle = 'Foundations of LLMs & Prompting',
   topLearners = [],
   cohortName = 'GDGoC 2026 Cohort',
+  siteUrl = (typeof window !== 'undefined'
+    ? `${window.location.origin}${window.location.pathname}`
+    : 'https://sabdulrasheed2804-design.github.io/gdgoc-ai-prompt-engineering/'),
 } = {}) {
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext('2d');
@@ -320,7 +330,7 @@ export function drawSpotlightFlyer(canvas, {
   ctx.fillText(`${cohortName} · AI & Prompt Engineering Cluster`, centerX, 990);
   ctx.fillStyle = '#3c4043';
   ctx.font = '500 13px "JetBrains Mono", monospace';
-  ctx.fillText('gdgoc-ai.pages.dev', centerX, 1018);
+  ctx.fillText(siteUrl.replace(/^https?:\/\//, '').replace(/\/$/, ''), centerX, 1018);
 }
 
 export function exportCanvasToPng(canvas, filename = 'certificate.png') {

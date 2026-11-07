@@ -25,10 +25,18 @@ export function determineCertificateTier({ stats = {}, milestones = [], leaderbo
   return 'Completion';
 }
 
-export function buildLinkedInCertUrl({ certId, recipientName, tier, issueDate, origin = (typeof window !== 'undefined' ? window.location.origin : 'https://gdgoc-ai.pages.dev') }) {
+export function buildLinkedInCertUrl({
+  certId, recipientName, tier, issueDate,
+  // GitHub Pages serves project sites from a /<repo-name>/ subpath, so the
+  // base URL needs origin+pathname, not origin alone (an origin-only link
+  // 404s once deployed) -- matches the #cert link built at render time below.
+  baseUrl = (typeof window !== 'undefined'
+    ? `${window.location.origin}${window.location.pathname}`
+    : 'https://sabdulrasheed2804-design.github.io/gdgoc-ai-prompt-engineering/'),
+}) {
   const orgName = encodeURIComponent('Google Developer Groups on Campus');
   const certName = encodeURIComponent(`AI & Prompt Engineering — ${tier}`);
-  const certUrl = encodeURIComponent(`${origin}/#cert/${certId}`);
+  const certUrl = encodeURIComponent(`${baseUrl}#cert/${certId}`);
   const certIdParam = encodeURIComponent(certId);
 
   return `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${certName}&organizationName=${orgName}&certId=${certIdParam}&certUrl=${certUrl}`;
