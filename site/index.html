@@ -3,35 +3,172 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Prompt Engineering Cluster</title>
+  <title>AI Prompt Engineering Cluster — GDGoC</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
   <header class="site-header">
     <div class="site-header__brand">
-      <span class="brand-dot" aria-hidden="true"></span>
+      <div class="brand-logo" aria-hidden="true">
+        <span class="brand-dot brand-dot--blue"></span>
+        <span class="brand-dot brand-dot--red"></span>
+        <span class="brand-dot brand-dot--yellow"></span>
+        <span class="brand-dot brand-dot--green"></span>
+      </div>
       <div>
-        <h1>AI Prompt Engineering Cluster</h1>
-        <p class="site-header__tagline">GDGoC — 8 weeks, live-graded prompt labs</p>
+        <div class="site-header__title-row">
+          <h1>AI & Prompt Engineering</h1>
+          <span class="badge badge--cluster">GDGoC</span>
+        </div>
+        <p class="site-header__tagline">8-week cohort · Server-graded prompt labs · Capstone assistant</p>
       </div>
     </div>
-    <button id="sign-in" class="btn btn--primary">Continue</button>
+    <div class="site-header__actions">
+      <button id="sign-in" class="btn btn--primary btn--google">
+        <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+    </div>
   </header>
+
   <nav id="main-nav" class="site-nav" hidden>
-    <a href="#dashboard" data-route="dashboard">Dashboard</a>
-    <a href="#roadmap" data-route="roadmap">Roadmap</a>
-    <a href="#portfolio" data-route="portfolio">Portfolio</a>
+    <div class="site-nav__inner">
+      <a href="#dashboard" data-route="dashboard" class="nav-link">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="#roadmap" data-route="roadmap" class="nav-link">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+        <span>8-Week Roadmap</span>
+      </a>
+      <a href="#playground" data-route="playground" class="nav-link">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        <span>Playground</span>
+      </a>
+      <a href="#leaderboard" data-route="leaderboard" class="nav-link">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        <span>Leaderboard</span>
+      </a>
+      <a href="#journal" data-route="journal" class="nav-link">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29-3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/></svg>
+        <span>Journal</span>
+      </a>
+      <a href="#portfolio" data-route="portfolio" class="nav-link">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1.581.814L10 13.175l-4.419 3.639A1 1 0 014 16V4z" clip-rule="evenodd"/></svg>
+        <span>Prompt Portfolio</span>
+      </a>
+      <a href="#certificate" data-route="certificate" class="nav-link">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a10.978 10.978 0 00-.25 2.449c0 3.332 2.155 6.275 5 7.426 2.845-1.151 5-4.094 5-7.426 0-.84-.087-1.658-.25-2.449l2.606-1.131a1 1 0 000-1.84l-7-3zM10 4.162l5.455 2.338L10 8.838 4.545 6.5 10 4.162z"/></svg>
+        <span>Certificate</span>
+      </a>
+      <a href="#profile" data-route="profile" class="nav-link">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+        <span>Profile</span>
+      </a>
+      <a href="#admin" data-route="admin" class="nav-link" id="nav-admin" hidden>
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+        <span>Admin</span>
+      </a>
+    </div>
   </nav>
+
   <main id="app">
-    <div class="empty-state">
-      <h2>Welcome</h2>
-      <p>Sign in with Google to see the 8-week roadmap and start your first graded lab.</p>
+    <div class="hero">
+      <div class="hero__badge">
+        <span class="hero__badge-pulse"></span>
+        <span>Google Developer Groups on Campus · 2026 Cohort</span>
+      </div>
+      <h2 class="hero__title">
+        Master Prompt Engineering with <span class="gradient-text">Live AI Evaluation</span>
+      </h2>
+      <p class="hero__subtitle">
+        An 8-week structured journey turning you from a casual prompt writer into someone who can design, benchmark, and deploy real AI systems. Build one evolving assistant and get your prompts graded against real test cases via Gemini.
+      </p>
+
+      <div class="hero__cta">
+        <button class="btn btn--primary btn--large btn--google" onclick="document.getElementById('sign-in').click()">
+          <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>Get Started with Google</span>
+        </button>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-card__icon feature-card__icon--blue">⚡</div>
+          <h3>Live Server-Side Grading</h3>
+          <p>No checkboxes or self-grading. Your prompts run against hidden test suites and strict JSON schemas via Gemini.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon feature-card__icon--green">🤖</div>
+          <h3>One Continuous Assistant</h3>
+          <p>Each week adds a real capability: structured outputs, reasoning, safety guardrails, RAG, tool calling, and autonomous agents.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon feature-card__icon--yellow">🌟</div>
+          <h3>Public Prompt Portfolio</h3>
+          <p>Your highest-scoring prompts can be showcased on a public, shareable portfolio URL to show peers and employers.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon feature-card__icon--red">🏆</div>
+          <h3>Verifiable Certificate</h3>
+          <p>Track your XP, streak, and lab submissions to earn an official GDGoC completion credential at Demo Day.</p>
+        </div>
+      </div>
+
+      <div class="curriculum-preview">
+        <h3 class="curriculum-preview__heading">Curriculum at a Glance</h3>
+        <div class="weeks-timeline">
+          <div class="timeline-step">
+            <span class="step-num">01</span>
+            <span class="step-text">LLM Foundations & Prompts</span>
+          </div>
+          <div class="timeline-step">
+            <span class="step-num">02</span>
+            <span class="step-text">Few-Shot & JSON Schema</span>
+          </div>
+          <div class="timeline-step">
+            <span class="step-num">03</span>
+            <span class="step-text">Chain-of-Thought & Reasoning</span>
+          </div>
+          <div class="timeline-step">
+            <span class="step-num">04</span>
+            <span class="step-text">Guardrails & Automated Evals</span>
+          </div>
+          <div class="timeline-step">
+            <span class="step-num">05</span>
+            <span class="step-text">RAG & Vector Grounding</span>
+          </div>
+          <div class="timeline-step">
+            <span class="step-num">06</span>
+            <span class="step-text">Function & Tool Calling</span>
+          </div>
+          <div class="timeline-step">
+            <span class="step-num">07</span>
+            <span class="step-text">Multi-Step Agent Loops</span>
+          </div>
+          <div class="timeline-step timeline-step--capstone">
+            <span class="step-num">08</span>
+            <span class="step-text">Capstone & Demo Day</span>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
-  <footer class="site-footer">
-    <p>GDGoC · AI Prompt Engineering Cluster</p>
-  </footer>
+
   <script type="importmap">
     {
       "imports": {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isLocalMode, setMember, getMember, recordLabRun, getLabRuns, getPortfolioEntries, setPortfolioPublished, getPublicPortfolio } from './store.js';
+import { isLocalMode, setMember, getMember, getAllMembers, checkIsAdmin, submitMilestone, getMilestones, getAllMilestones, reviewMilestone, addJournalEntry, getJournalEntries, recordLabRun, getLabRuns, getAllLabRuns, getPortfolioEntries, setPortfolioPublished, getPublicPortfolio, issueCertificate, getCertificate, getMemberCertificates, getAllCertificates, getAllLeaderboardEntries, syncLeaderboardProfile } from './store.js';
 
 test('local mode round-trips a member record', async () => {
   const firebaseConfig = null;
@@ -31,4 +31,111 @@ test('getPublicPortfolio only returns published entries', async () => {
   const publicEntries = await getPublicPortfolio('member-y', { firebaseConfig: null });
   assert.equal(publicEntries.length, 1);
   assert.equal(publicEntries[0].week, 1);
+});
+
+test('checkIsAdmin recognizes local admin', async () => {
+  const isAdmin = await checkIsAdmin('local-member', { firebaseConfig: null });
+  assert.equal(isAdmin, true);
+  const isNotAdmin = await checkIsAdmin('random-user', { firebaseConfig: null });
+  assert.equal(isNotAdmin, false);
+});
+
+test('getAllMembers returns all registered members', async () => {
+  await setMember('u-all-1', { name: 'User 1' }, { firebaseConfig: null });
+  await setMember('u-all-2', { name: 'User 2' }, { firebaseConfig: null });
+  const all = await getAllMembers({ firebaseConfig: null });
+  assert.ok(all.length >= 2);
+  assert.ok(all.some((m) => m.name === 'User 1'));
+});
+
+test('submitMilestone and reviewMilestone workflow', async () => {
+  const record = await submitMilestone('u-mile', {
+    week: 1,
+    repoUrl: 'https://github.com/u/repo',
+    notes: 'Built CLI',
+  }, { firebaseConfig: null });
+
+  assert.equal(record.status, 'pending');
+  assert.equal(record.week, 1);
+
+  const memberMilestones = await getMilestones('u-mile', { firebaseConfig: null });
+  assert.equal(memberMilestones.length, 1);
+
+  const reviewed = await reviewMilestone(record.id, {
+    status: 'approved',
+    feedback: 'Great start!',
+    reviewerName: 'Lead Ada',
+  }, { firebaseConfig: null });
+
+  assert.equal(reviewed.status, 'approved');
+  assert.equal(reviewed.feedback, 'Great start!');
+
+  const allMilestones = await getAllMilestones({ firebaseConfig: null });
+  assert.ok(allMilestones.some((m) => m.id === record.id && m.status === 'approved'));
+});
+
+test('addJournalEntry and getJournalEntries round-trip', async () => {
+  const entry = await addJournalEntry('u-j', {
+    title: 'Reflection 1',
+    content: 'Learned something cool',
+  }, { firebaseConfig: null });
+
+  assert.equal(entry.title, 'Reflection 1');
+  const all = await getJournalEntries('u-j', { firebaseConfig: null });
+  assert.equal(all.length, 1);
+  assert.equal(all[0].title, 'Reflection 1');
+});
+
+test('getAllLabRuns returns all recorded lab runs in local mode', async () => {
+  await recordLabRun('u-all-1', { labId: 'w1-json-lab', passed: true, timestamp: '2026-11-01T00:00:00.000Z' }, { firebaseConfig: null });
+  const allRuns = await getAllLabRuns({ firebaseConfig: null });
+  assert.ok(allRuns.length >= 1);
+  assert.ok(allRuns.some((r) => r.memberId === 'u-all-1'));
+});
+
+test('issueCertificate and getCertificate workflow in local mode', async () => {
+  const cert = await issueCertificate({
+    recipientUid: 'u-cert-1',
+    recipientName: 'Ada Lovelace',
+    tier: 'Distinction',
+    trackName: 'AI & Prompt Engineering Track',
+    faculty: 'Computing',
+  }, { firebaseConfig: null });
+
+  assert.ok(cert.certId);
+  assert.equal(cert.recipientName, 'Ada Lovelace');
+  assert.equal(cert.tier, 'Distinction');
+
+  const fetched = await getCertificate(cert.certId, { firebaseConfig: null });
+  assert.equal(fetched.certId, cert.certId);
+  assert.equal(fetched.recipientName, 'Ada Lovelace');
+
+  const memberCerts = await getMemberCertificates('u-cert-1', { firebaseConfig: null });
+  assert.equal(memberCerts.length, 1);
+  assert.equal(memberCerts[0].certId, cert.certId);
+
+  const allCerts = await getAllCertificates({ firebaseConfig: null });
+  assert.ok(allCerts.some((c) => c.certId === cert.certId));
+});
+
+test('syncLeaderboardProfile only ever sets the public-safe directory fields', async () => {
+  await syncLeaderboardProfile('u-lb-1', { name: 'Ada', level: '300', department: 'CS', careerGoal: 'Cloud Engineer' }, { firebaseConfig: null });
+
+  const entries = await getAllLeaderboardEntries({ firebaseConfig: null });
+  const entry = entries.find((e) => e.uid === 'u-lb-1');
+  assert.equal(entry.name, 'Ada');
+  assert.equal(entry.level, '300');
+  assert.equal(entry.department, 'CS');
+  assert.equal(entry.careerGoal, 'Cloud Engineer');
+});
+
+test('syncLeaderboardProfile merges into the same entry rather than creating a duplicate', async () => {
+  await syncLeaderboardProfile('u-lb-2', { name: 'Grace', department: 'CS' }, { firebaseConfig: null });
+  await syncLeaderboardProfile('u-lb-2', { name: 'Grace Hopper' }, { firebaseConfig: null });
+
+  const entries = await getAllLeaderboardEntries({ firebaseConfig: null });
+  const matches = entries.filter((e) => e.uid === 'u-lb-2');
+  assert.equal(matches.length, 1);
+  assert.equal(matches[0].name, 'Grace Hopper');
+  assert.equal(matches[0].department, 'CS');
 });

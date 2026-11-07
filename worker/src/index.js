@@ -3,6 +3,7 @@ import { makeFirestoreClient } from './firestore.js';
 import { evaluateSubmission, ValidationError, WEEK_BY_LAB_ID } from './grading.js';
 
 const DAILY_TOKEN_CAP = 50000;
+const XP_PER_LAB = 10; // must match site/js/stats.js's XP_PER_LAB
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +20,12 @@ function json(body, status = 200) {
 
 function todayString() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function yesterdayString(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
 }
 
 export async function handleGradeLab({ uid, labId, promptText }, env, firestore) {
@@ -75,12 +82,14 @@ export async function handleGradeLab({ uid, labId, promptText }, env, firestore)
     timestamp: new Date().toISOString(),
   });
 
+  let isNewPassForWeek = false;
   if (result.passed) {
     // Best-effort: the portfolio entry is a promotional derivative of the
     // labRuns record above, not the source of truth. A member who passed a
     // lab must get their result even if this write fails.
     try {
       await firestore.transactionalUpdate(`portfolio/${uid}/entries/${week}`, (current) => {
+        isNewPassForWeek = !current;
         if (current && current.rubricScore >= result.score) return current;
         return {
           promptText,
@@ -92,6 +101,33 @@ export async function handleGradeLab({ uid, labId, promptText }, env, firestore)
     } catch (err) {
       console.error('failed to upsert portfolio entry', err);
     }
+  }
+
+  // Best-effort, same reasoning as the portfolio write above. xp/labsPassed
+  // only move on a week's first pass (re-passing an already-passed week
+  // isn't a new achievement); streak/lastActiveDate move on every attempt,
+  // pass or fail, matching site/js/stats.js's "any lab run counts as an
+  // active day" definition. The client can only ever touch this document's
+  // name/level/department/careerGoal fields (see firestore.rules) -- xp,
+  // labsPassed and streak are never client-writable, unlike InfraTrack's
+  // self-reported leaderboard.
+  try {
+    await firestore.transactionalUpdate(`leaderboard/${uid}`, (current) => {
+      const wasActiveToday = current?.lastActiveDate === today;
+      const wasActiveYesterday = current?.lastActiveDate === yesterdayString(today);
+      const streak = wasActiveToday ? (current?.streak ?? 1)
+        : wasActiveYesterday ? (current?.streak ?? 0) + 1
+        : 1;
+      return {
+        ...current,
+        xp: (current?.xp ?? 0) + (isNewPassForWeek ? XP_PER_LAB : 0),
+        labsPassed: (current?.labsPassed ?? 0) + (isNewPassForWeek ? 1 : 0),
+        streak,
+        lastActiveDate: today,
+      };
+    });
+  } catch (err) {
+    console.error('failed to upsert leaderboard entry', err);
   }
 
   return { passed: result.passed, score: result.score, feedback: result.feedback };

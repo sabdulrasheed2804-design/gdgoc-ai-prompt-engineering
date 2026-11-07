@@ -36,7 +36,15 @@ export async function signIn() {
     return;
   }
   const { auth, authModule } = await getAuthHandles();
-  await authModule.signInWithPopup(auth, new authModule.GoogleAuthProvider());
+  try {
+    await authModule.signInWithPopup(auth, new authModule.GoogleAuthProvider());
+  } catch (err) {
+    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+      // User cancelled or closed the popup window; normal interaction
+      return;
+    }
+    throw err;
+  }
 }
 
 export async function signOut() {

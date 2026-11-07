@@ -3,17 +3,61 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isAdmin() {
+      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    match /admins/{uid} {
+      allow read: if request.auth != null;
+      allow write: if false; // provisioned manually via console or CLI
+    }
+
     match /members/{uid} {
+      // Full registration (email, faculty, department, social links) is
+      // private to the member and admins -- never "any signed-in user",
+      // which would leak every member's contact details to every other
+      // member. Public-safe fields for ranking/display live in
+      // leaderboard/{uid} below instead.
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Public-safe summary for the leaderboard: name/level/department/career
+    // goal (self-written, low-stakes) plus xp/labsPassed/streak (written
+    // only by the grading Worker's service account, which bypasses these
+    // rules the same way labRuns/portfolio writes already do) -- a member
+    // can advertise their own name, never their own score.
+    match /leaderboard/{uid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'level', 'department', 'careerGoal']);
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'level', 'department', 'careerGoal']);
+    }
+
+    match /journal/{uid}/entries/{entryId} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
+    match /milestones/{submissionId} {
+      allow read: if request.auth != null && (resource.data.memberId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null && request.resource.data.memberId == request.auth.uid
+        && request.resource.data.status == 'pending'; // never self-approved at creation
+      allow update: if isAdmin(); // only leads can review
+    }
+
     match /labRuns/{labRunId} {
-      allow read: if request.auth != null && resource.data.memberId == request.auth.uid;
+      allow read: if request.auth != null && (resource.data.memberId == request.auth.uid || isAdmin());
       allow write: if false; // written only by the gradeLab Cloud Function's service account
     }
 
     match /apiUsage/{uid} {
       allow read, write: if false; // written only by the gradeLab Cloud Function's service account
+    }
+
+    match /certificates/{certId} {
+      allow read: if true; // public credential verification
+      allow write: if isAdmin(); // only leads can issue
     }
 
     match /portfolio/{memberId}/entries/{week} {

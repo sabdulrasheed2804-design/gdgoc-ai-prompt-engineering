@@ -66,7 +66,7 @@ as the rest of `site/`.
   e: string}>` (exactly 5 entries). Week 8 (no `lab`) gets `topics` and
   `resources` but no `quiz` key. Task 2 and Task 3 consume this shape.
 
-- [ ] **Step 1: Write the failing structural tests**
+- [x] **Step 1: Write the failing structural tests**
 
 ```js
 import { test } from 'node:test';
@@ -101,12 +101,12 @@ test('week 8 (capstone) has no quiz field', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `node --test site/js/data.test.mjs`
 Expected: FAIL — `topics`/`resources`/`quiz` are `undefined` on every week.
 
-- [ ] **Step 3: Add `topics`, `resources`, and `quiz` to each week in `site/js/data.js`**
+- [x] **Step 3: Add `topics`, `resources`, and `quiz` to each week in `site/js/data.js`**
 
 Add the following to each `WEEK*` object (alongside the existing `week`,
 `title`, `objectives`, `lab`, `milestone` fields — don't change those).
@@ -332,12 +332,12 @@ This is exact content, not a pattern to invent:
 ]
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `node --test site/js/data.test.mjs`
 Expected: PASS, all 3 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add site/js/data.js site/js/data.test.mjs
@@ -383,7 +383,7 @@ these data attributes):
 </div>
 ```
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 import { test } from 'node:test';
@@ -420,12 +420,12 @@ test('renderQuiz escapes HTML in question, option, and explanation text', () => 
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `node --test site/js/quiz.test.mjs`
 Expected: FAIL — `quiz.js` does not exist.
 
-- [ ] **Step 3: Implement `site/js/quiz.js`**
+- [x] **Step 3: Implement `site/js/quiz.js`**
 
 `scoreQuiz`: a one-line `reduce`/`filter` over the shorter approach — count
 indices where `selectedAnswers[i] === correctAnswers[i]`.
@@ -451,12 +451,12 @@ option if it differs from `correct`, and unhide that question's
 across all questions in the block, call `scoreQuiz`, and set the block's
 `[data-quiz-score]` text to `` `Score: ${score}/${total}` `` and unhide it.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `node --test site/js/quiz.test.mjs`
 Expected: PASS, all 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add site/js/quiz.js site/js/quiz.test.mjs
@@ -477,7 +477,7 @@ git commit -m "feat: add quiz.js (ungraded self-check scoring and rendering)"
 - Consumes: `renderQuiz`/`wireQuiz` (Task 2); `w.topics`/`w.resources`/
   `w.quiz` (Task 1).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 test('renders topics and resources for a week that has them', () => {
@@ -516,12 +516,12 @@ test('renders a quiz block for a week with a quiz, omits it otherwise', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `node --test site/js/roadmap.test.mjs`
 Expected: FAIL — no topics/resources/quiz markup is rendered yet.
 
-- [ ] **Step 3: Import `renderQuiz` in `roadmap.js` and extend `renderRoadmap`'s template**
+- [x] **Step 3: Import `renderQuiz` in `roadmap.js` and extend `renderRoadmap`'s template**
 
 Add, inside each week card (topics after the objectives paragraph; the
 quiz block and a resources list after the existing milestone/lab-form
@@ -542,18 +542,18 @@ ${w.resources ? `
 ` : ''}
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `node --test site/js/roadmap.test.mjs`
 Expected: PASS, all tests (existing + 3 new).
 
-- [ ] **Step 5: Wire `wireQuiz` into the roadmap route in `app.js`**
+- [x] **Step 5: Wire `wireQuiz` into the roadmap route in `app.js`**
 
 In `renderRoadmapRoute`, after the existing `wireLabForms(mountEl,
 currentMember.uid);` line, add `wireQuiz(mountEl);` (import `wireQuiz` from
 `./quiz.js` alongside the existing imports).
 
-- [ ] **Step 6: Add quiz/topics/resources styles to `site/css/styles.css`**
+- [x] **Step 6: Add quiz/topics/resources styles to `site/css/styles.css`**
 
 Reuse existing tokens, don't invent new ones: `.week-card__topics` and
 `.week-card__resources` as simple lists matching the existing
@@ -564,12 +564,12 @@ Reuse existing tokens, don't invent new ones: `.week-card__topics` and
 `.quiz__option.is-correct` with `--color-green`; `.quiz__option.is-incorrect`
 with `--color-red`; `.quiz__explain` as muted text (`--color-text-muted`).
 
-- [ ] **Step 7: Run the full site test suite**
+- [x] **Step 7: Run the full site test suite**
 
 Run: `node --test site/js/*.test.mjs`
 Expected: PASS, all files.
 
-- [ ] **Step 8: Manual verification in a browser**
+- [x] **Step 8: Manual verification in a browser**
 
 Serve `site/` locally, sign in, open Roadmap. Confirm: every week shows
 topics and a "Go further" resources list with working links (opening in a
@@ -585,7 +585,7 @@ questions.
 
 Expected: all of the above hold; no console errors.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add site/js/roadmap.js site/js/roadmap.test.mjs site/js/app.js site/css/styles.css

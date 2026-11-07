@@ -119,6 +119,88 @@ test('derives week from labId on the server, ignoring a client-supplied week', a
   assert.equal(firestore.store.docs['portfolio/u8/entries/7'], undefined);
 });
 
+test('writes leaderboard xp/labsPassed/streak on a first passing submission', async () => {
+  const firestore = makeFakeFirestore();
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+
+  await handleGradeLab({ uid: 'u10', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
+
+  const entry = firestore.store.docs['leaderboard/u10'];
+  assert.equal(entry.xp, 10);
+  assert.equal(entry.labsPassed, 1);
+  assert.equal(entry.streak, 1);
+  assert.equal(entry.lastActiveDate, today);
+});
+
+test('updates leaderboard streak/lastActiveDate on a failing submission too, without xp', async () => {
+  const firestore = makeFakeFirestore();
+  test.mock.method(gemini, 'callGemini', async () => ({ text: 'not json', tokensUsed: 5 }));
+
+  await handleGradeLab({ uid: 'u11', week: 1, labId: 'w1-json-lab', promptText: 'bad' }, FAKE_ENV, firestore);
+
+  const entry = firestore.store.docs['leaderboard/u11'];
+  assert.equal(entry.xp, 0);
+  assert.equal(entry.labsPassed, 0);
+  assert.equal(entry.streak, 1);
+  assert.equal(entry.lastActiveDate, today);
+});
+
+test('does not double-count xp/labsPassed on a second pass for the same week', async () => {
+  const firestore = makeFakeFirestore();
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+
+  await handleGradeLab({ uid: 'u12', week: 1, labId: 'w1-json-lab', promptText: 'first' }, FAKE_ENV, firestore);
+  await handleGradeLab({ uid: 'u12', week: 1, labId: 'w1-json-lab', promptText: 'second' }, FAKE_ENV, firestore);
+
+  const entry = firestore.store.docs['leaderboard/u12'];
+  assert.equal(entry.xp, 10);
+  assert.equal(entry.labsPassed, 1);
+});
+
+test('increments streak when the previous active day was yesterday, resets after a gap', async () => {
+  const yesterday = new Date(new Date(`${today}T00:00:00Z`).getTime() - 86400000).toISOString().slice(0, 10);
+  const firestore = makeFakeFirestore();
+  firestore.store.docs['leaderboard/u13'] = { xp: 0, labsPassed: 0, streak: 5, lastActiveDate: yesterday };
+  test.mock.method(gemini, 'callGemini', async () => ({ text: 'not json', tokensUsed: 5 }));
+
+  await handleGradeLab({ uid: 'u13', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
+  assert.equal(firestore.store.docs['leaderboard/u13'].streak, 6);
+
+  const firestore2 = makeFakeFirestore();
+  firestore2.store.docs['leaderboard/u14'] = { xp: 0, labsPassed: 0, streak: 5, lastActiveDate: '2000-01-01' };
+  await handleGradeLab({ uid: 'u14', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore2);
+  assert.equal(firestore2.store.docs['leaderboard/u14'].streak, 1);
+});
+
+test('preserves self-written name/level/department fields already on the leaderboard doc', async () => {
+  const firestore = makeFakeFirestore();
+  firestore.store.docs['leaderboard/u15'] = { name: 'Ada', level: '300', department: 'CS' };
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+
+  await handleGradeLab({ uid: 'u15', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
+
+  const entry = firestore.store.docs['leaderboard/u15'];
+  assert.equal(entry.name, 'Ada');
+  assert.equal(entry.level, '300');
+  assert.equal(entry.department, 'CS');
+  assert.equal(entry.xp, 10);
+});
+
+test('still returns a result even if the leaderboard write fails', async () => {
+  const firestore = makeFakeFirestore();
+  const originalTransactionalUpdate = firestore.transactionalUpdate.bind(firestore);
+  firestore.transactionalUpdate = async (path, computeNext) => {
+    if (path.startsWith('leaderboard/')) throw new Error('simulated Firestore failure');
+    return originalTransactionalUpdate(path, computeNext);
+  };
+  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+
+  const result = await handleGradeLab({ uid: 'u16', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
+
+  assert.equal(result.passed, true);
+  assert.equal(firestore.store.docs['leaderboard/u16'], undefined);
+});
+
 test('still charges tokens and returns a result even if the portfolio write fails', async () => {
   const firestore = makeFakeFirestore();
   const originalTransactionalUpdate = firestore.transactionalUpdate.bind(firestore);
