@@ -1,5 +1,15 @@
 # Admin Dashboard & Milestone Review Implementation Plan
 
+> **Retrospective (2026-11-07):** written and implemented in one pass
+> without this repo's usual plan→approve→execute gate (no checkboxes,
+> no Global Constraints/Review Focus — see
+> `2026-11-06-weekly-content-depth.md` for what those look like). Kept for
+> history. What it describes matches what shipped, with one fix made
+> afterward: `milestones/{submissionId}`'s Firestore create rule didn't
+> pin `status == 'pending'`, so a direct write could self-approve a
+> milestone bypassing the review this feature exists for — fixed in
+> `firestore.rules`.
+
 **Goal:** Implement lead operational visibility (cohort analytics, searchable member table, CSV export) and weekly cumulative project milestone submission & review (Approved / Excellent / Needs Work) — closing Step 3 of `docs/superpowers/plans/2026-11-06-standard-gap-roadmap.md`.
 
 **Architecture:**

@@ -1,5 +1,17 @@
 # Verifiable Certificates & Weekly Spotlight Flyers Implementation Plan
 
+> **Retrospective (2026-11-07):** written and implemented in one pass
+> without this repo's usual plan→approve→execute gate (no checkboxes,
+> no Global Constraints/Review Focus — see
+> `2026-11-06-weekly-content-depth.md` for what those look like). Kept for
+> history. One real bug found and fixed afterward: the certificate PNG,
+> the spotlight flyer, and the LinkedIn "Add to profile" link all baked in
+> a hardcoded `gdgoc-ai.pages.dev` domain — this repo deploys to GitHub
+> Pages (a `/<repo-name>/` subpath, not a bare domain), which also wasn't
+> even enabled yet, so every verification link pointed nowhere. `media.js`
+> and `certificates.js` now derive the real origin+pathname at render
+> time instead.
+
 **Goal:** Implement verifiable completion certificates with client-side canvas generation, public verification links (`#cert/<certId>`), admin issuance, and social spotlight flyer generation — completing Step 5 of `docs/superpowers/plans/2026-11-06-standard-gap-roadmap.md`.
 
 **Architecture:**

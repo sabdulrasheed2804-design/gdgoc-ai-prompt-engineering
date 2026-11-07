@@ -1,5 +1,16 @@
 # Member Registration & Profile Implementation Plan
 
+> **Retrospective (2026-11-07):** written and implemented in one pass
+> without this repo's usual plan→approve→execute gate (no checkboxes,
+> no Global Constraints/Review Focus — see
+> `2026-11-06-weekly-content-depth.md` for what those look like). Kept for
+> history. One fix made afterward: `githubUrl`/`linkedinUrl` were rendered
+> as clickable links without re-checking the scheme server-side — this
+> form's own client-side validation isn't a security boundary (a direct
+> Firestore write bypasses it), so a `javascript:` URL could've become a
+> clickable self-XSS. `profile.js` now gates every such href on
+> `util.js`'s `isHttpUrl`.
+
 **Goal:** Implement first-time member registration onboarding and a profile management view (`#profile`), capturing academic details, AI experience, career goals, and social links — closing Step 2 of `docs/superpowers/plans/2026-11-06-standard-gap-roadmap.md`.
 
 **Architecture:**
