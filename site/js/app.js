@@ -4,6 +4,7 @@ import {
   submitMilestone, getMilestones, getAllMilestones, reviewMilestone,
   addJournalEntry, getJournalEntries,
   issueCertificate, getCertificate, getMemberCertificates, getAllCertificates,
+  getAllLeaderboardEntries, syncLeaderboardProfile,
 } from './store.js';
 import { signIn, onAuthChange, warmUp } from './auth.js';
 import { renderRoadmap, wireLabForms, wireMilestoneForms } from './roadmap.js';
@@ -132,25 +133,17 @@ if (startedOnPublicRoute) {
   }
 
   async function renderLeaderboardRoute(mountEl, isStale) {
-    const [allMembers, allLabRuns] = await Promise.all([
-      getAllMembers(),
-      getAllLabRuns(),
-    ]);
+    // Reads the public-safe leaderboard/{uid} projection, never the full
+    // members collection -- see firestore.rules: members/{uid} is
+    // self-or-admin only, so every signed-in member being able to see this
+    // route must not require reading anyone else's full profile/email.
+    const entries = await getAllLeaderboardEntries();
     if (isStale()) return;
 
-    const runsByMember = {};
-    for (const run of allLabRuns) {
-      if (!runsByMember[run.memberId]) runsByMember[run.memberId] = [];
-      runsByMember[run.memberId].push(run);
-    }
-
-    const statsMap = {};
-    for (const m of allMembers) {
-      const runs = runsByMember[m.uid] || [];
-      statsMap[m.uid] = computeStats(runs, { totalLabs: TOTAL_LABS });
-    }
-
-    const ranked = rankMembers(allMembers, statsMap);
+    const statsMap = Object.fromEntries(
+      entries.map((e) => [e.uid, { xp: e.xp || 0, labsPassed: e.labsPassed || 0, streak: e.streak || 0 }])
+    );
+    const ranked = rankMembers(entries, statsMap);
     renderLeaderboard(mountEl, { rankedMembers: ranked, currentUserId: currentMember.uid });
   }
 
@@ -240,6 +233,9 @@ if (startedOnPublicRoute) {
             updatedAt: Date.now(),
           };
           await setMember(currentMember.uid, updated);
+          await syncLeaderboardProfile(currentMember.uid, {
+            name: updated.name, level: updated.level, department: updated.department, careerGoal: updated.careerGoal,
+          });
           currentMember = updated;
           signInButton.textContent = updated.name;
           renderProfileRoute(mountEl);
@@ -338,6 +334,9 @@ if (startedOnPublicRoute) {
           registeredAt: memberDoc?.registeredAt || Date.now(),
         };
         await setMember(member.uid, fullData);
+        await syncLeaderboardProfile(member.uid, {
+          name: fullData.name, level: fullData.level, department: fullData.department, careerGoal: fullData.careerGoal,
+        });
         currentMember = fullData;
         signInButton.textContent = fullData.name;
         navEl.hidden = false;

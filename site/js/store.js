@@ -8,7 +8,7 @@ function probeLocalStorage() {
   }
 }
 
-const memoryStore = { members: {}, labRuns: [], portfolio: {}, milestones: [], journal: {}, certificates: {}, admins: new Set(['local-member']) };
+const memoryStore = { members: {}, labRuns: [], portfolio: {}, milestones: [], journal: {}, certificates: {}, leaderboard: {}, admins: new Set(['local-member']) };
 const browserStorage = probeLocalStorage();
 
 function readLocalMembers() {
@@ -452,6 +452,79 @@ export async function getAllCertificates({ firebaseConfig = FIREBASE } = {}) {
     if (isPermissionError(err)) {
       const certs = readLocalCertificates();
       return Object.values(certs);
+    }
+    throw err;
+  }
+}
+
+function readLocalLeaderboard() {
+  if (!browserStorage) return memoryStore.leaderboard;
+  try {
+    return JSON.parse(browserStorage.getItem('leaderboard') || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function writeLocalLeaderboard(entries) {
+  if (!browserStorage) {
+    memoryStore.leaderboard = entries;
+    return;
+  }
+  try {
+    browserStorage.setItem('leaderboard', JSON.stringify(entries));
+  } catch {
+    // storage unavailable or full; local mode degrades to in-memory only
+  }
+}
+
+// Public-safe leaderboard projection: name/level/department/careerGoal are
+// self-written (see syncLeaderboardProfile below); xp/labsPassed/streak are
+// written only by the grading Worker's service account (never by this
+// client) -- see firestore.rules' leaderboard/{uid} rule.
+export async function getAllLeaderboardEntries({ firebaseConfig = FIREBASE } = {}) {
+  if (isLocalMode(firebaseConfig)) {
+    const entries = readLocalLeaderboard();
+    return Object.entries(entries).map(([uid, data]) => ({ uid, ...data }));
+  }
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    const snap = await firestore.getDocs(firestore.collection(db, 'leaderboard'));
+    return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+  } catch (err) {
+    if (isPermissionError(err)) {
+      const entries = readLocalLeaderboard();
+      return Object.entries(entries).map(([uid, data]) => ({ uid, ...data }));
+    }
+    throw err;
+  }
+}
+
+// Merge-writes only the public-safe directory fields to the member's own
+// leaderboard doc; never touches xp/labsPassed/streak, and a merge write
+// (not a full setDoc) is required so this doesn't clobber those
+// Worker-written fields -- see firestore.rules' hasOnly(...) check, which
+// a non-merge write would fail once the Worker has already written xp etc.
+export async function syncLeaderboardProfile(uid, fields, { firebaseConfig = FIREBASE } = {}) {
+  const safeFields = {};
+  for (const key of ['name', 'level', 'department', 'careerGoal']) {
+    if (fields[key] !== undefined) safeFields[key] = fields[key];
+  }
+  if (isLocalMode(firebaseConfig)) {
+    const entries = readLocalLeaderboard();
+    entries[uid] = { ...entries[uid], ...safeFields };
+    writeLocalLeaderboard(entries);
+    return;
+  }
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    await firestore.setDoc(firestore.doc(db, 'leaderboard', uid), safeFields, { merge: true });
+  } catch (err) {
+    if (isPermissionError(err)) {
+      const entries = readLocalLeaderboard();
+      entries[uid] = { ...entries[uid], ...safeFields };
+      writeLocalLeaderboard(entries);
+      return;
     }
     throw err;
   }

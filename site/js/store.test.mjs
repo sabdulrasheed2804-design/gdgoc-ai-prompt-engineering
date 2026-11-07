@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isLocalMode, setMember, getMember, getAllMembers, checkIsAdmin, submitMilestone, getMilestones, getAllMilestones, reviewMilestone, addJournalEntry, getJournalEntries, recordLabRun, getLabRuns, getAllLabRuns, getPortfolioEntries, setPortfolioPublished, getPublicPortfolio, issueCertificate, getCertificate, getMemberCertificates, getAllCertificates } from './store.js';
+import { isLocalMode, setMember, getMember, getAllMembers, checkIsAdmin, submitMilestone, getMilestones, getAllMilestones, reviewMilestone, addJournalEntry, getJournalEntries, recordLabRun, getLabRuns, getAllLabRuns, getPortfolioEntries, setPortfolioPublished, getPublicPortfolio, issueCertificate, getCertificate, getMemberCertificates, getAllCertificates, getAllLeaderboardEntries, syncLeaderboardProfile } from './store.js';
 
 test('local mode round-trips a member record', async () => {
   const firebaseConfig = null;
@@ -116,4 +116,26 @@ test('issueCertificate and getCertificate workflow in local mode', async () => {
 
   const allCerts = await getAllCertificates({ firebaseConfig: null });
   assert.ok(allCerts.some((c) => c.certId === cert.certId));
+});
+
+test('syncLeaderboardProfile only ever sets the public-safe directory fields', async () => {
+  await syncLeaderboardProfile('u-lb-1', { name: 'Ada', level: '300', department: 'CS', careerGoal: 'Cloud Engineer' }, { firebaseConfig: null });
+
+  const entries = await getAllLeaderboardEntries({ firebaseConfig: null });
+  const entry = entries.find((e) => e.uid === 'u-lb-1');
+  assert.equal(entry.name, 'Ada');
+  assert.equal(entry.level, '300');
+  assert.equal(entry.department, 'CS');
+  assert.equal(entry.careerGoal, 'Cloud Engineer');
+});
+
+test('syncLeaderboardProfile merges into the same entry rather than creating a duplicate', async () => {
+  await syncLeaderboardProfile('u-lb-2', { name: 'Grace', department: 'CS' }, { firebaseConfig: null });
+  await syncLeaderboardProfile('u-lb-2', { name: 'Grace Hopper' }, { firebaseConfig: null });
+
+  const entries = await getAllLeaderboardEntries({ firebaseConfig: null });
+  const matches = entries.filter((e) => e.uid === 'u-lb-2');
+  assert.equal(matches.length, 1);
+  assert.equal(matches[0].name, 'Grace Hopper');
+  assert.equal(matches[0].department, 'CS');
 });
