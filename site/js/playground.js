@@ -214,47 +214,6 @@ export function formatTemperatureGuidance(temp) {
   };
 }
 
-export function simulatePromptExecution({ systemPrompt, userInput, temperature, preset }) {
-  const startTime = Date.now();
-  const totalInputTokens = estimateTokens(systemPrompt) + estimateTokens(userInput);
-
-  // If a preset matches or is derived, provide authentic model output
-  let outputText = '';
-  let isValidJson = false;
-
-  if (preset && preset.engineeredOutput) {
-    outputText = preset.engineeredOutput;
-  } else if (systemPrompt.toLowerCase().includes('json')) {
-    outputText = JSON.stringify({
-      response: `Processed query: "${userInput.slice(0, 40)}${userInput.length > 40 ? '…' : ''}"`,
-      evaluatedAt: new Date().toISOString(),
-      temperature: Number(temperature),
-      status: 'success',
-    }, null, 2);
-  } else {
-    outputText = `[Response generated with temperature ${temperature}]\n\nProcessed query: "${userInput}"\n\nAdhering to system persona instructions.`;
-  }
-
-  try {
-    JSON.parse(outputText);
-    isValidJson = true;
-  } catch {
-    isValidJson = false;
-  }
-
-  const latencyMs = Math.floor(120 + Math.random() * 80);
-  const outputTokens = estimateTokens(outputText);
-
-  return {
-    outputText,
-    latencyMs,
-    inputTokens: totalInputTokens,
-    outputTokens,
-    isValidJson,
-    timestamp: startTime,
-  };
-}
-
 export function renderPlayground(mountEl, { initialWeek = 1 } = {}) {
   const selectedPreset = PLAYGROUND_PRESETS.find((p) => p.week === Number(initialWeek)) || PLAYGROUND_PRESETS[0];
   const initialTemp = selectedPreset.temperature;
@@ -265,12 +224,11 @@ export function renderPlayground(mountEl, { initialWeek = 1 } = {}) {
       <div class="playground-header">
         <div class="playground-title-group">
           <div class="playground-badge-row">
-            <span class="badge badge--cluster">Interactive Sandbox</span>
-            <span class="badge badge--server">Gemini Simulation Engine</span>
+            <span class="badge badge--cluster">Technique Reference Library</span>
           </div>
           <h2 class="playground-title">Prompt Engineering Studio</h2>
           <p class="playground-subtitle">
-            Experiment with system prompts, hyperparameter sampling, structured output schemas, and compare naive versus engineered designs side-by-side.
+            Study each week's actual recorded technique, edit the prompts to see token cost change, and compare naive versus engineered designs side-by-side. This is a reference library, not a live model — submit your own prompt in this week's graded lab to get a real result.
           </p>
         </div>
 
@@ -351,9 +309,6 @@ export function renderPlayground(mountEl, { initialWeek = 1 } = {}) {
                 <button id="compare-toggle-btn" class="btn btn--secondary" type="button">
                   <span>⚖️ Compare with Naive</span>
                 </button>
-                <button id="run-prompt-btn" class="btn btn--primary" type="button">
-                  <span>⚡ Run & Test Prompt</span>
-                </button>
               </div>
             </div>
           </div>
@@ -369,9 +324,9 @@ export function renderPlayground(mountEl, { initialWeek = 1 } = {}) {
                 <span class="editor-dot dot--yellow"></span>
                 <span class="editor-dot dot--green"></span>
               </div>
-              <span class="terminal-title">Model Response Telemetry</span>
+              <span class="terminal-title">Recorded Reference Output</span>
               <div class="terminal-meta" id="terminal-meta">
-                <span class="meta-tag">Ready</span>
+                <span class="meta-tag">Week ${selectedPreset.week} example</span>
               </div>
             </div>
 
@@ -442,7 +397,6 @@ export function wirePlayground(mountEl) {
   const userTokenEl = mountEl.querySelector('#user-token-count');
   const totalTokenEl = mountEl.querySelector('#total-token-count');
   const budgetPctEl = mountEl.querySelector('#budget-pct');
-  const runBtn = mountEl.querySelector('#run-prompt-btn');
   const compareToggleBtn = mountEl.querySelector('#compare-toggle-btn');
   const closeCompareBtn = mountEl.querySelector('#close-compare-btn');
   const singleContainer = mountEl.querySelector('#single-output-container');
@@ -493,7 +447,7 @@ export function wirePlayground(mountEl) {
     if (compareGoodOutput) compareGoodOutput.textContent = preset.engineeredOutput;
 
     if (terminalMeta) {
-      terminalMeta.innerHTML = `<span class="meta-tag">Loaded: Week ${preset.week}</span>`;
+      terminalMeta.innerHTML = `<span class="meta-tag">Week ${preset.week} example</span>`;
     }
 
     updateTokenCounts();
@@ -521,37 +475,6 @@ export function wirePlayground(mountEl) {
   }
   if (userPromptInput) {
     userPromptInput.addEventListener('input', updateTokenCounts);
-  }
-
-  if (runBtn) {
-    runBtn.addEventListener('click', async () => {
-      runBtn.disabled = true;
-      runBtn.innerHTML = '<span>⏳ Evaluating...</span>';
-      terminalMeta.innerHTML = `<span class="meta-tag meta-tag--running">Generating</span>`;
-
-      // Visual feedback
-      outputPre.textContent = 'Streaming tokens from Gemini inference engine…';
-
-      await new Promise((resolve) => setTimeout(resolve, 350));
-
-      const activePreset = PLAYGROUND_PRESETS.find((p) => p.id === presetSelect?.value);
-      const result = simulatePromptExecution({
-        systemPrompt: systemPromptInput.value,
-        userInput: userPromptInput.value,
-        temperature: Number(tempSlider.value),
-        preset: activePreset,
-      });
-
-      outputPre.textContent = result.outputText;
-      terminalMeta.innerHTML = `
-        <span class="meta-tag meta-tag--latency">⚡ ${result.latencyMs}ms</span>
-        <span class="meta-tag meta-tag--tokens">${result.outputTokens} tokens</span>
-        ${result.isValidJson ? '<span class="meta-tag meta-tag--schema">✅ Valid JSON</span>' : ''}
-      `;
-
-      runBtn.disabled = false;
-      runBtn.innerHTML = '<span>⚡ Run & Test Prompt</span>';
-    });
   }
 
   if (compareToggleBtn) {

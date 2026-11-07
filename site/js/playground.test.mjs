@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {
   estimateTokens,
   formatTemperatureGuidance,
-  simulatePromptExecution,
   PLAYGROUND_PRESETS,
   renderPlayground,
 } from './playground.js';
@@ -54,46 +53,6 @@ test('temperature 1.0 returns creative guidance', () => {
   assert.match(guide.label, /Creative/);
 });
 
-// --- simulatePromptExecution ---
-test('simulatePromptExecution returns preset output when preset is provided', () => {
-  const preset = PLAYGROUND_PRESETS[0];
-  const result = simulatePromptExecution({
-    systemPrompt: preset.systemPrompt,
-    userInput: preset.userInput,
-    temperature: preset.temperature,
-    preset,
-  });
-  assert.equal(result.outputText, preset.engineeredOutput);
-  assert.ok(result.latencyMs >= 100);
-  assert.ok(result.inputTokens > 0);
-  assert.ok(result.outputTokens > 0);
-  assert.ok(result.timestamp > 0);
-});
-
-test('simulatePromptExecution returns JSON when system prompt mentions json', () => {
-  const result = simulatePromptExecution({
-    systemPrompt: 'Return JSON only.',
-    userInput: 'Hello',
-    temperature: 0.0,
-    preset: null,
-  });
-  assert.ok(result.isValidJson);
-  const parsed = JSON.parse(result.outputText);
-  assert.ok(parsed.response);
-  assert.equal(parsed.status, 'success');
-});
-
-test('simulatePromptExecution falls back to text response without json keyword', () => {
-  const result = simulatePromptExecution({
-    systemPrompt: 'You are a poet.',
-    userInput: 'Write a haiku.',
-    temperature: 0.7,
-    preset: null,
-  });
-  assert.match(result.outputText, /temperature/);
-  assert.equal(result.isValidJson, false);
-});
-
 // --- PLAYGROUND_PRESETS ---
 test('PLAYGROUND_PRESETS has entries for weeks 1 through 7', () => {
   for (let w = 1; w <= 7; w++) {
@@ -117,7 +76,7 @@ test('renderPlayground renders the playground UI with preset selector', () => {
   assert.match(el.innerHTML, /system-prompt-input/);
   assert.match(el.innerHTML, /user-prompt-input/);
   assert.match(el.innerHTML, /temp-slider/);
-  assert.match(el.innerHTML, /Run .* Test Prompt/);
+  assert.doesNotMatch(el.innerHTML, /Run .* Test Prompt/);
   assert.match(el.innerHTML, /Compare with Naive/);
 });
 
