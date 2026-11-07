@@ -1,4 +1,4 @@
-import { escapeHtml } from './util.js';
+import { escapeHtml, isHttpUrl } from './util.js';
 import { drawSpotlightFlyer, exportCanvasToPng } from './media.js';
 import { determineCertificateTier } from './certificates.js';
 
@@ -77,7 +77,7 @@ export function exportMembersToCsv(members = []) {
   return [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
 }
 
-export function renderAdminDashboard(mountEl, { stats, members = [], milestones = [], certificates = [], allLabRuns = [], activeTab = 'analytics' }) {
+export function renderAdminDashboard(mountEl, { stats, members = [], milestones = [], certificates = [], allLabRuns = [], activeTab = 'analytics', totalLabs = 7 }) {
   const runsByMember = {};
   for (const r of allLabRuns) {
     if (!runsByMember[r.memberId]) runsByMember[r.memberId] = [];
@@ -224,8 +224,8 @@ export function renderAdminDashboard(mountEl, { stats, members = [], milestones 
                   <td>${escapeHtml(m.weeklyHours || 'N/A')}</td>
                   <td>
                     <div class="table-links">
-                      ${m.githubUrl ? `<a href="${escapeHtml(m.githubUrl)}" target="_blank" rel="noopener">GitHub</a>` : ''}
-                      ${m.linkedinUrl ? `<a href="${escapeHtml(m.linkedinUrl)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
+                      ${isHttpUrl(m.githubUrl) ? `<a href="${escapeHtml(m.githubUrl)}" target="_blank" rel="noopener">GitHub</a>` : ''}
+                      ${isHttpUrl(m.linkedinUrl) ? `<a href="${escapeHtml(m.linkedinUrl)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
                     </div>
                   </td>
                   <td>${m.registeredAt ? new Date(m.registeredAt).toLocaleDateString() : 'N/A'}</td>
@@ -261,12 +261,16 @@ export function renderAdminDashboard(mountEl, { stats, members = [], milestones 
               <div class="review-card__body">
                 <div class="review-meta-row">
                   <strong>Repository:</strong>
-                  <a href="${escapeHtml(m.repoUrl)}" target="_blank" rel="noopener">${escapeHtml(m.repoUrl)}</a>
+                  ${isHttpUrl(m.repoUrl)
+                    ? `<a href="${escapeHtml(m.repoUrl)}" target="_blank" rel="noopener">${escapeHtml(m.repoUrl)}</a>`
+                    : escapeHtml(m.repoUrl || '')}
                 </div>
                 ${m.demoUrl ? `
                   <div class="review-meta-row">
                     <strong>Demo / Video:</strong>
-                    <a href="${escapeHtml(m.demoUrl)}" target="_blank" rel="noopener">${escapeHtml(m.demoUrl)}</a>
+                    ${isHttpUrl(m.demoUrl)
+                      ? `<a href="${escapeHtml(m.demoUrl)}" target="_blank" rel="noopener">${escapeHtml(m.demoUrl)}</a>`
+                      : escapeHtml(m.demoUrl)}
                   </div>
                 ` : ''}
                 <div class="review-notes-box">
@@ -360,7 +364,7 @@ export function renderAdminDashboard(mountEl, { stats, members = [], milestones 
                   const distinctPassed = new Set(mRuns.filter((r) => r.passed).map((r) => r.labId)).size;
                   const mMilestones = milestonesByMember[m.uid] || [];
                   const tier = determineCertificateTier({
-                    stats: { labsPassed: distinctPassed, totalLabs: 7 },
+                    stats: { labsPassed: distinctPassed, totalLabs },
                     milestones: mMilestones,
                   });
                   const existingCert = certsByMember[m.uid];
@@ -380,7 +384,7 @@ export function renderAdminDashboard(mountEl, { stats, members = [], milestones 
                         <span class="track-cell">${escapeHtml(m.careerGoal || 'AI Track')}</span>
                       </td>
                       <td>
-                        <span class="metric-cell font-mono">${distinctPassed}/7 Labs</span>
+                        <span class="metric-cell font-mono">${distinctPassed}/${totalLabs} Labs</span>
                       </td>
                       <td>
                         ${tier ? `<span class="badge badge--glow">${tier}</span>` : '<span class="badge badge--locked">Not Eligible</span>'}
@@ -395,7 +399,7 @@ export function renderAdminDashboard(mountEl, { stats, members = [], milestones 
                           ? '<span class="badge badge--verified">Issued</span>'
                           : tier
                             ? `<button class="btn btn--sm btn--primary" data-issue-cert data-uid="${m.uid}" data-tier="${tier}" data-name="${escapeHtml(m.name)}" data-track="${escapeHtml(m.careerGoal || 'AI Track')}" data-faculty="${escapeHtml(m.faculty || 'Engineering')}">Issue ${tier}</button>`
-                            : '<button class="btn btn--sm btn--secondary" disabled>Requires 7 Labs</button>'
+                            : `<button class="btn btn--sm btn--secondary" disabled>Requires ${totalLabs} Labs</button>`
                         }
                       </td>
                     </tr>

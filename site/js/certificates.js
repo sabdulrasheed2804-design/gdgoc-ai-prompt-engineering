@@ -182,7 +182,7 @@ export function renderPublicCertificateVerification(mountEl, cert) {
           </div>
 
           <div class="public-cert-footer-links">
-            ${recipientUid ? `<a href="#public/${recipientUid}" class="btn btn--secondary">View Student's Prompt Portfolio →</a>` : ''}
+            ${recipientUid ? `<a href="#public/${escapeHtml(recipientUid)}" class="btn btn--secondary">View Student's Prompt Portfolio →</a>` : ''}
             <button class="btn btn--primary" id="btn-download-cert">Download Certificate PNG</button>
           </div>
         </div>

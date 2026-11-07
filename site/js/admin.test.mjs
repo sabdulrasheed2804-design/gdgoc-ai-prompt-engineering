@@ -54,6 +54,24 @@ test('exportMembersToCsv formats valid CSV with proper headers and escaping', ()
   assert.match(csv, /Charles Babbage/);
 });
 
+test('renderAdminDashboard never links a non-http(s) milestone URL, in case one reaches the client via a raw write', () => {
+  const el = { innerHTML: '' };
+  const maliciousMilestones = [
+    { id: 'u3-w1', memberId: 'u3', memberName: 'Eve', week: 1, status: 'pending', repoUrl: 'javascript:alert(1)', demoUrl: 'javascript:alert(2)', notes: '' },
+  ];
+  const stats = computeCohortStats(SAMPLE_MEMBERS, maliciousMilestones);
+  renderAdminDashboard(el, { stats, members: SAMPLE_MEMBERS, milestones: maliciousMilestones, activeTab: 'milestones' });
+  assert.doesNotMatch(el.innerHTML, /href="javascript:/);
+});
+
+test('renderAdminDashboard shows the real lab count instead of a hardcoded one', () => {
+  const el = { innerHTML: '' };
+  const stats = computeCohortStats(SAMPLE_MEMBERS, SAMPLE_MILESTONES);
+  renderAdminDashboard(el, { stats, members: SAMPLE_MEMBERS, milestones: SAMPLE_MILESTONES, totalLabs: 9 });
+  assert.match(el.innerHTML, /\/9 Labs/);
+  assert.doesNotMatch(el.innerHTML, /\/7 Labs/);
+});
+
 test('renderAdminDashboard renders tabs, member tables, and milestone queue', () => {
   const el = { innerHTML: '' };
   const stats = computeCohortStats(SAMPLE_MEMBERS, SAMPLE_MILESTONES);

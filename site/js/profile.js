@@ -1,4 +1,4 @@
-import { escapeHtml } from './util.js';
+import { escapeHtml, isHttpUrl } from './util.js';
 
 export const LEVELS = ['100L', '200L', '300L', '400L', '500L', 'Postgraduate', 'Other'];
 
@@ -195,8 +195,8 @@ export function renderProfileView(mountEl, member) {
   const careerGoal = member.careerGoal ? escapeHtml(member.careerGoal) : 'Not specified';
   const aiExperience = member.aiExperience ? escapeHtml(member.aiExperience) : 'Not specified';
   const weeklyHours = member.weeklyHours ? escapeHtml(member.weeklyHours) : 'Not specified';
-  const github = member.githubUrl ? escapeHtml(member.githubUrl) : '';
-  const linkedin = member.linkedinUrl ? escapeHtml(member.linkedinUrl) : '';
+  const github = isHttpUrl(member.githubUrl) ? escapeHtml(member.githubUrl) : '';
+  const linkedin = isHttpUrl(member.linkedinUrl) ? escapeHtml(member.linkedinUrl) : '';
 
   mountEl.innerHTML = `
     <div class="profile-view">

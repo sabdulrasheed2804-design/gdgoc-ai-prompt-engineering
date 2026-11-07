@@ -23,6 +23,7 @@ import { renderPlayground, wirePlayground } from './playground.js';
 import { WEEKS } from './data.js';
 import { PROGRAM } from './config.js';
 import { annotateWeekStatus } from './pacing.js';
+import { escapeHtml } from './util.js';
 
 const signInButton = document.getElementById('sign-in');
 const appEl = document.getElementById('app');
@@ -99,7 +100,7 @@ if (startedOnPublicRoute) {
           <div class="cert-banner-info">
             <span class="cert-banner-icon">🎓</span>
             <div>
-              <h4>Official Credential Awarded — ${certs[0].tier}</h4>
+              <h4>Official Credential Awarded — ${escapeHtml(certs[0].tier || '')}</h4>
               <p>You have earned an official verified certificate for completing the AI & Prompt Engineering curriculum.</p>
             </div>
           </div>
@@ -267,7 +268,7 @@ if (startedOnPublicRoute) {
     if (isStale()) return;
 
     const stats = computeCohortStats(allMembers, allMilestones);
-    renderAdminDashboard(mountEl, { stats, members: allMembers, milestones: allMilestones, certificates: allCerts, allLabRuns });
+    renderAdminDashboard(mountEl, { stats, members: allMembers, milestones: allMilestones, certificates: allCerts, allLabRuns, totalLabs: TOTAL_LABS });
     wireAdminDashboard(mountEl, {
       members: allMembers,
       allLabRuns,

@@ -84,3 +84,13 @@ test('renderProfileView renders member profile details and escapes HTML', () => 
   assert.match(el.innerHTML, /AI Engineer/);
 });
 
+test('renderProfileView never links a non-http(s) social URL, in case one reaches the client via a raw write', () => {
+  const el = { innerHTML: '' };
+  renderProfileView(el, {
+    name: 'Eve', githubUrl: 'javascript:alert(1)', linkedinUrl: 'data:text/html,bad',
+  });
+  assert.doesNotMatch(el.innerHTML, /href="javascript:/);
+  assert.doesNotMatch(el.innerHTML, /href="data:/);
+  assert.match(el.innerHTML, /Not linked/);
+});
+
