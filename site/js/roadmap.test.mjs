@@ -39,3 +39,90 @@ test('surfaces the submitLab error message on failure', async () => {
   });
   assert.equal(outcome.text, 'cap reached');
 });
+
+test('renders topics and resources for a week that has them', () => {
+  const el = { innerHTML: '' };
+  renderRoadmap(el, [{
+    week: 1, title: 'T', objectives: 'x', milestone: 'm',
+    topics: ['Topic one'],
+    resources: [{ title: 'Res one', url: 'https://example.com' }],
+  }]);
+  assert.match(el.innerHTML, /Topic one/);
+  assert.match(el.innerHTML, /Res one/);
+  assert.match(el.innerHTML, /href="https:\/\/example\.com"/);
+});
+
+test('escapes HTML in topics and resource titles', () => {
+  const el = { innerHTML: '' };
+  renderRoadmap(el, [{
+    week: 1, title: 'T', objectives: 'x', milestone: 'm',
+    topics: ['<script>'],
+    resources: [{ title: '<img onerror=x>', url: 'https://example.com' }],
+  }]);
+  assert.doesNotMatch(el.innerHTML, /<script>/);
+  assert.doesNotMatch(el.innerHTML, /<img onerror/);
+});
+
+test('renders a quiz block for a week with a quiz, omits it otherwise', () => {
+  const el = { innerHTML: '' };
+  renderRoadmap(el, [
+    { week: 1, title: 'With quiz', objectives: 'x', milestone: 'm', quiz: [{ q: 'Q', o: ['a', 'b', 'c', 'd'], a: 0, e: 'e' }] },
+    { week: 2, title: 'No quiz', objectives: 'x', milestone: 'm' },
+  ]);
+  const withQuizCard = el.innerHTML.split('No quiz')[0];
+  assert.match(withQuizCard, /data-quiz/);
+  const noQuizCard = el.innerHTML.split('No quiz')[1];
+  assert.doesNotMatch(noQuizCard, /data-quiz/);
+});
+
+test('renders prompt comparison breakdown when provided', () => {
+  const el = { innerHTML: '' };
+  renderRoadmap(el, [{
+    week: 1, title: 'W1', objectives: 'x', milestone: 'm',
+    promptComparison: {
+      technique: 'JSON Contract',
+      badPrompt: 'Tell me the answer',
+      badOutput: 'Sure thing! The answer is Paris',
+      goodPrompt: 'Output ONLY JSON',
+      goodOutput: '{"answer": "Paris"}',
+      whyItWorks: 'Negative constraints prevent conversational filler',
+    },
+  }]);
+  assert.match(el.innerHTML, /Pattern Breakdown/);
+  assert.match(el.innerHTML, /JSON Contract/);
+  assert.match(el.innerHTML, /Tell me the answer/);
+  assert.match(el.innerHTML, /Output ONLY JSON/);
+  assert.match(el.innerHTML, /Negative constraints prevent conversational filler/);
+  assert.match(el.innerHTML, /href="#playground\?week=1"/);
+});
+
+test('renders upgraded resource cards with type, time, takeaway and essential badge', () => {
+  const el = { innerHTML: '' };
+  renderRoadmap(el, [{
+    week: 1, title: 'W1', objectives: 'x', milestone: 'm',
+    resources: [
+      {
+        title: 'Deep Guide',
+        url: 'https://example.com/guide',
+        type: 'guide',
+        time: '12 min read',
+        takeaway: 'Crucial concept summary.',
+        essential: true,
+      },
+      {
+        title: 'Optional Paper',
+        url: 'https://example.com/paper',
+        type: 'paper',
+        time: '25 min read',
+        takeaway: 'Deep theoretical background.',
+        essential: false,
+      },
+    ],
+  }]);
+  assert.match(el.innerHTML, /📘 Guide/);
+  assert.match(el.innerHTML, /⏱️ 12 min read/);
+  assert.match(el.innerHTML, /⭐ Core Concept/);
+  assert.match(el.innerHTML, /Crucial concept summary\./);
+  assert.match(el.innerHTML, /📄 Paper/);
+  assert.match(el.innerHTML, /Deep Dive/);
+});

@@ -8,7 +8,7 @@ function probeLocalStorage() {
   }
 }
 
-const memoryStore = { members: {}, labRuns: [], portfolio: {} };
+const memoryStore = { members: {}, labRuns: [], portfolio: {}, milestones: [], journal: {}, certificates: {}, admins: new Set(['local-member']) };
 const browserStorage = probeLocalStorage();
 
 function readLocalMembers() {
@@ -49,14 +49,27 @@ async function getFirestoreHandles(firebaseConfig) {
   return firestorePromise;
 }
 
+function isPermissionError(err) {
+  return err?.code === 'permission-denied' || (err?.message && err.message.toLowerCase().includes('permission'));
+}
+
 export async function getMember(uid, { firebaseConfig = FIREBASE } = {}) {
   if (isLocalMode(firebaseConfig)) {
     const members = readLocalMembers();
     return members[uid] ?? null;
   }
-  const { db, firestore } = await getFirestoreHandles(firebaseConfig);
-  const snap = await firestore.getDoc(firestore.doc(db, 'members', uid));
-  return snap.exists() ? snap.data() : null;
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    const snap = await firestore.getDoc(firestore.doc(db, 'members', uid));
+    return snap.exists() ? snap.data() : null;
+  } catch (err) {
+    if (isPermissionError(err)) {
+      console.warn('Firestore permission denied; using local member fallback.');
+      const members = readLocalMembers();
+      return members[uid] ?? null;
+    }
+    throw err;
+  }
 }
 
 export async function setMember(uid, data, { firebaseConfig = FIREBASE } = {}) {
@@ -66,8 +79,19 @@ export async function setMember(uid, data, { firebaseConfig = FIREBASE } = {}) {
     writeLocalMembers(members);
     return;
   }
-  const { db, firestore } = await getFirestoreHandles(firebaseConfig);
-  await firestore.setDoc(firestore.doc(db, 'members', uid), data);
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    await firestore.setDoc(firestore.doc(db, 'members', uid), data);
+  } catch (err) {
+    if (isPermissionError(err)) {
+      console.warn('Firestore permission denied; saving member locally.');
+      const members = readLocalMembers();
+      members[uid] = data;
+      writeLocalMembers(members);
+      return;
+    }
+    throw err;
+  }
 }
 
 export async function recordLabRun(uid, run, { firebaseConfig = FIREBASE } = {}) {
@@ -84,10 +108,33 @@ export async function getLabRuns(uid, { firebaseConfig = FIREBASE } = {}) {
   if (isLocalMode(firebaseConfig)) {
     return memoryStore.labRuns.filter((r) => r.memberId === uid);
   }
-  const { db, firestore } = await getFirestoreHandles(firebaseConfig);
-  const q = firestore.query(firestore.collection(db, 'labRuns'), firestore.where('memberId', '==', uid));
-  const snap = await firestore.getDocs(q);
-  return snap.docs.map((d) => d.data());
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    const q = firestore.query(firestore.collection(db, 'labRuns'), firestore.where('memberId', '==', uid));
+    const snap = await firestore.getDocs(q);
+    return snap.docs.map((d) => d.data());
+  } catch (err) {
+    if (isPermissionError(err)) {
+      return memoryStore.labRuns.filter((r) => r.memberId === uid);
+    }
+    throw err;
+  }
+}
+
+export async function getAllLabRuns({ firebaseConfig = FIREBASE } = {}) {
+  if (isLocalMode(firebaseConfig)) {
+    return [...memoryStore.labRuns];
+  }
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    const snap = await firestore.getDocs(firestore.collection(db, 'labRuns'));
+    return snap.docs.map((d) => d.data());
+  } catch (err) {
+    if (isPermissionError(err)) {
+      return [...memoryStore.labRuns];
+    }
+    throw err;
+  }
 }
 
 export async function getPortfolioEntries(uid, { firebaseConfig = FIREBASE } = {}) {
@@ -122,4 +169,290 @@ export async function setPortfolioPublished(uid, week, published, { firebaseConf
   }
   const { db, firestore } = await getFirestoreHandles(firebaseConfig);
   await firestore.setDoc(firestore.doc(db, 'portfolio', uid, 'entries', String(week)), { published }, { merge: true });
+}
+
+export async function checkIsAdmin(uid, { firebaseConfig = FIREBASE } = {}) {
+  if (!uid) return false;
+  if (isLocalMode(firebaseConfig)) {
+    return memoryStore.admins.has(uid);
+  }
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    const snap = await firestore.getDoc(firestore.doc(db, 'admins', uid));
+    return snap.exists();
+  } catch (err) {
+    if (isPermissionError(err)) {
+      return memoryStore.admins.has(uid);
+    }
+    throw err;
+  }
+}
+
+export async function getAllMembers({ firebaseConfig = FIREBASE } = {}) {
+  if (isLocalMode(firebaseConfig)) {
+    const membersMap = readLocalMembers();
+    return Object.values(membersMap);
+  }
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    const snap = await firestore.getDocs(firestore.collection(db, 'members'));
+    return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+  } catch (err) {
+    if (isPermissionError(err)) {
+      const membersMap = readLocalMembers();
+      return Object.values(membersMap);
+    }
+    throw err;
+  }
+}
+
+export async function submitMilestone(uid, data, { firebaseConfig = FIREBASE } = {}) {
+  const id = `${uid}-w${data.week}`;
+  const record = {
+    id,
+    memberId: uid,
+    week: Number(data.week),
+    repoUrl: data.repoUrl || '',
+    demoUrl: data.demoUrl || '',
+    notes: data.notes || '',
+    memberName: data.memberName || 'Member',
+    status: 'pending',
+    submittedAt: Date.now(),
+  };
+
+  if (isLocalMode(firebaseConfig)) {
+    const idx = memoryStore.milestones.findIndex((m) => m.id === id);
+    if (idx >= 0) {
+      memoryStore.milestones[idx] = { ...memoryStore.milestones[idx], ...record };
+    } else {
+      memoryStore.milestones.push(record);
+    }
+    return record;
+  }
+
+  const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+  await firestore.setDoc(firestore.doc(db, 'milestones', id), record);
+  return record;
+}
+
+export async function getMilestones(uid, { firebaseConfig = FIREBASE } = {}) {
+  if (isLocalMode(firebaseConfig)) {
+    return memoryStore.milestones.filter((m) => m.memberId === uid);
+  }
+  const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+  const q = firestore.query(firestore.collection(db, 'milestones'), firestore.where('memberId', '==', uid));
+  const snap = await firestore.getDocs(q);
+  return snap.docs.map((d) => d.data());
+}
+
+export async function getAllMilestones({ firebaseConfig = FIREBASE } = {}) {
+  if (isLocalMode(firebaseConfig)) {
+    return [...memoryStore.milestones];
+  }
+  const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+  const snap = await firestore.getDocs(firestore.collection(db, 'milestones'));
+  return snap.docs.map((d) => d.data());
+}
+
+export async function reviewMilestone(id, { status, feedback, reviewerName }, { firebaseConfig = FIREBASE } = {}) {
+  const updates = {
+    status,
+    feedback: feedback || '',
+    reviewerName: reviewerName || 'Lead',
+    reviewedAt: Date.now(),
+  };
+
+  if (isLocalMode(firebaseConfig)) {
+    const idx = memoryStore.milestones.findIndex((m) => m.id === id);
+    if (idx >= 0) {
+      memoryStore.milestones[idx] = { ...memoryStore.milestones[idx], ...updates };
+      return memoryStore.milestones[idx];
+    }
+    return null;
+  }
+
+  const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+  await firestore.updateDoc(firestore.doc(db, 'milestones', id), updates);
+  return { id, ...updates };
+}
+
+function addLocalJournalEntry(uid, item) {
+  if (!memoryStore.journal[uid]) {
+    try {
+      memoryStore.journal[uid] = JSON.parse(browserStorage?.getItem(`journal_${uid}`) || '[]');
+    } catch {
+      memoryStore.journal[uid] = [];
+    }
+  }
+  memoryStore.journal[uid].unshift(item);
+  try {
+    browserStorage?.setItem(`journal_${uid}`, JSON.stringify(memoryStore.journal[uid]));
+  } catch {}
+  return item;
+}
+
+function getLocalJournalEntries(uid) {
+  if (!memoryStore.journal[uid]) {
+    try {
+      memoryStore.journal[uid] = JSON.parse(browserStorage?.getItem(`journal_${uid}`) || '[]');
+    } catch {
+      memoryStore.journal[uid] = [];
+    }
+  }
+  return [...memoryStore.journal[uid]];
+}
+
+export async function addJournalEntry(uid, entry, { firebaseConfig = FIREBASE } = {}) {
+  const item = {
+    id: `j-${Date.now()}`,
+    memberId: uid,
+    ...entry,
+    createdAt: entry.createdAt || Date.now(),
+  };
+
+  if (isLocalMode(firebaseConfig)) {
+    return addLocalJournalEntry(uid, item);
+  }
+
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    const docRef = await firestore.addDoc(firestore.collection(db, 'journal', uid, 'entries'), item);
+    return { id: docRef.id, ...item };
+  } catch (err) {
+    if (isPermissionError(err)) {
+      return addLocalJournalEntry(uid, item);
+    }
+    throw err;
+  }
+}
+
+export async function getJournalEntries(uid, { firebaseConfig = FIREBASE } = {}) {
+  if (isLocalMode(firebaseConfig)) {
+    return getLocalJournalEntries(uid);
+  }
+
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    const q = firestore.query(
+      firestore.collection(db, 'journal', uid, 'entries'),
+      firestore.orderBy('createdAt', 'desc')
+    );
+    const snap = await firestore.getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    if (isPermissionError(err)) {
+      return getLocalJournalEntries(uid);
+    }
+    throw err;
+  }
+}
+
+function readLocalCertificates() {
+  if (!browserStorage) return memoryStore.certificates;
+  try {
+    return JSON.parse(browserStorage.getItem('certificates') || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function writeLocalCertificates(certs) {
+  if (!browserStorage) {
+    memoryStore.certificates = certs;
+    return;
+  }
+  try {
+    browserStorage.setItem('certificates', JSON.stringify(certs));
+  } catch {}
+}
+
+export async function getCertificate(certId, { firebaseConfig = FIREBASE } = {}) {
+  if (!certId) return null;
+  if (isLocalMode(firebaseConfig)) {
+    const certs = readLocalCertificates();
+    return certs[certId] ?? null;
+  }
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    const snap = await firestore.getDoc(firestore.doc(db, 'certificates', certId));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  } catch (err) {
+    if (isPermissionError(err)) {
+      const certs = readLocalCertificates();
+      return certs[certId] ?? null;
+    }
+    throw err;
+  }
+}
+
+export async function getMemberCertificates(uid, { firebaseConfig = FIREBASE } = {}) {
+  if (!uid) return [];
+  if (isLocalMode(firebaseConfig)) {
+    const certs = readLocalCertificates();
+    return Object.values(certs).filter((c) => c.recipientUid === uid);
+  }
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    const q = firestore.query(
+      firestore.collection(db, 'certificates'),
+      firestore.where('recipientUid', '==', uid)
+    );
+    const snap = await firestore.getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    if (isPermissionError(err)) {
+      const certs = readLocalCertificates();
+      return Object.values(certs).filter((c) => c.recipientUid === uid);
+    }
+    throw err;
+  }
+}
+
+export async function issueCertificate(data, { firebaseConfig = FIREBASE } = {}) {
+  const certId = data.certId || `GDGOC-AI-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  const record = {
+    ...data,
+    certId,
+    issuedAt: data.issuedAt || Date.now(),
+    status: 'valid',
+  };
+
+  if (isLocalMode(firebaseConfig)) {
+    const certs = readLocalCertificates();
+    certs[certId] = record;
+    writeLocalCertificates(certs);
+    return record;
+  }
+
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    await firestore.setDoc(firestore.doc(db, 'certificates', certId), record);
+    return record;
+  } catch (err) {
+    if (isPermissionError(err)) {
+      const certs = readLocalCertificates();
+      certs[certId] = record;
+      writeLocalCertificates(certs);
+      return record;
+    }
+    throw err;
+  }
+}
+
+export async function getAllCertificates({ firebaseConfig = FIREBASE } = {}) {
+  if (isLocalMode(firebaseConfig)) {
+    const certs = readLocalCertificates();
+    return Object.values(certs);
+  }
+  try {
+    const { db, firestore } = await getFirestoreHandles(firebaseConfig);
+    const snap = await firestore.getDocs(firestore.collection(db, 'certificates'));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    if (isPermissionError(err)) {
+      const certs = readLocalCertificates();
+      return Object.values(certs);
+    }
+    throw err;
+  }
 }
