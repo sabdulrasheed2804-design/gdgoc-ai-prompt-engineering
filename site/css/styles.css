@@ -192,6 +192,98 @@ body {
   opacity: 0.85;
 }
 
+/* Week menu -- click into one week at a time, instead of all 8 weeks'
+   full content stacked on one long page. */
+.week-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.week-tile {
+  display: block;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition-fast);
+}
+
+a.week-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-blue);
+  box-shadow: var(--shadow-glow);
+}
+
+.week-tile--locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.week-tile__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.week-tile__num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.week-tile__title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.week-tile__objectives {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.week-tile__lock-note {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.badge--locked {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.badge--completed {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.week-detail__back {
+  display: inline-block;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.week-detail__back:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
 /* Navigation Bar */
 .site-nav {
   position: sticky;
