@@ -18,6 +18,10 @@ test('resolveRoute falls back on a hash matching an inherited property name, not
   assert.equal(resolveRoute({ dashboard() {}, roadmap() {} }, '#constructor', 'dashboard'), 'dashboard');
 });
 
+test('resolveRoute matches a route by its segment before the first "/", for a route that owns its own sub-navigation', () => {
+  assert.equal(resolveRoute({ dashboard() {}, roadmap() {} }, '#roadmap/3', 'dashboard'), 'roadmap');
+});
+
 test('a slower route call is not allowed to overwrite a faster, later call (stale-render race)', async () => {
   const mountEl = { innerHTML: '' };
   let resolveSlow;

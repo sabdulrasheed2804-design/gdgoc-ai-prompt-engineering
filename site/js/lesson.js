@@ -196,6 +196,9 @@ export function renderLessonStepper(week, { submission } = {}) {
         <span class="lesson-stepper__kind" data-lesson-kind>${escapeHtml(KIND_LABEL[steps[0].kind] || '')}</span>
         <span class="lesson-stepper__counter" data-lesson-counter>Step 1 of ${steps.length}</span>
       </div>
+      <div class="lesson-stepper__progress" aria-hidden="true">
+        <div class="lesson-stepper__progress-bar" data-lesson-progress style="width: ${(100 / steps.length).toFixed(1)}%"></div>
+      </div>
       ${panels}
       <div class="lesson-stepper__nav">
         <button type="button" class="btn btn--secondary btn--sm" data-lesson-prev disabled>← Previous</button>
@@ -206,32 +209,62 @@ export function renderLessonStepper(week, { submission } = {}) {
   `;
 }
 
-function showStep(stepperEl, index) {
-  const panels = stepperEl.querySelectorAll('[data-lesson-panel]');
-  const total = panels.length;
-  const clamped = Math.max(0, Math.min(index, total - 1));
+// Timed to match the CSS transition durations below (.lesson-stepper__panel)
+// -- a shorter exit than entrance reads as a gentle hand-off rather than a
+// jarring swap, which is the whole point of animating this at all.
+const EXIT_MS = 160;
+const ENTER_MS = 220;
 
-  let activePanel = null;
-  panels.forEach((panel) => {
-    const isActive = Number(panel.dataset.index) === clamped;
-    panel.hidden = !isActive;
-    if (isActive) activePanel = panel;
-  });
+function showStep(stepperEl, index) {
+  if (stepperEl.dataset.transitioning === '1') return;
+
+  const panels = Array.from(stepperEl.querySelectorAll('[data-lesson-panel]'));
+  const total = panels.length;
+  const current = Number(stepperEl.dataset.current || 0);
+  const clamped = Math.max(0, Math.min(index, total - 1));
+  if (clamped === current) return;
+
+  const forward = clamped > current;
+  const outgoing = panels.find((p) => Number(p.dataset.index) === current);
+  const incoming = panels.find((p) => Number(p.dataset.index) === clamped);
+  if (!incoming) return;
+
+  stepperEl.dataset.transitioning = '1';
+  stepperEl.dataset.current = String(clamped);
+
   stepperEl.querySelectorAll('[data-lesson-dot]').forEach((dot) => {
     dot.classList.toggle('is-active', Number(dot.dataset.index) === clamped);
   });
-
   const counter = stepperEl.querySelector('[data-lesson-counter]');
   if (counter) counter.textContent = `Step ${clamped + 1} of ${total}`;
   const kindEl = stepperEl.querySelector('[data-lesson-kind]');
-  if (kindEl && activePanel) kindEl.textContent = activePanel.dataset.kind;
-
+  if (kindEl) kindEl.textContent = incoming.dataset.kind;
+  const progressBar = stepperEl.querySelector('[data-lesson-progress]');
+  if (progressBar) progressBar.style.width = `${((clamped + 1) / total * 100).toFixed(1)}%`;
   const prevBtn = stepperEl.querySelector('[data-lesson-prev]');
   if (prevBtn) prevBtn.disabled = clamped === 0;
   const nextBtn = stepperEl.querySelector('[data-lesson-next]');
   if (nextBtn) nextBtn.disabled = clamped === total - 1;
 
-  stepperEl.dataset.current = String(clamped);
+  const exitClass = forward ? 'is-exiting-forward' : 'is-exiting-backward';
+  const enterClass = forward ? 'is-entering-forward' : 'is-entering-backward';
+
+  if (outgoing) outgoing.classList.add(exitClass);
+
+  setTimeout(() => {
+    if (outgoing) {
+      outgoing.hidden = true;
+      outgoing.classList.remove(exitClass);
+    }
+    incoming.hidden = false;
+    incoming.classList.add(enterClass);
+    void incoming.offsetWidth; // force a reflow so the next class removal actually transitions
+    incoming.classList.remove(enterClass);
+
+    setTimeout(() => {
+      stepperEl.dataset.transitioning = '';
+    }, ENTER_MS);
+  }, outgoing ? EXIT_MS : 0);
 }
 
 export function wireLessonStepper(mountEl) {

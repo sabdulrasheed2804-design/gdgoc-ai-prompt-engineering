@@ -40,6 +40,11 @@ test('renderLessonStepper shows only the first step, with a step counter and kin
   assert.match(html, /data-lesson-panel data-index="1" data-kind="Core Concept" hidden/);
 });
 
+test('renderLessonStepper renders a progress bar sized to 1-of-N steps', () => {
+  const html = renderLessonStepper(WEEK);
+  assert.match(html, /data-lesson-progress style="width: 12\.5%"/);
+});
+
 test('renderLessonStepper renders each step kind\'s real content', () => {
   const html = renderLessonStepper(WEEK);
   assert.match(html, /Topic A/);

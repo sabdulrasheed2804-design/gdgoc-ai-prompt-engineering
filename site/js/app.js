@@ -7,7 +7,8 @@ import {
   getAllLeaderboardEntries, syncLeaderboardProfile,
 } from './store.js';
 import { signIn, onAuthChange, warmUp } from './auth.js';
-import { renderRoadmap, wireLabForms, wireMilestoneForms } from './roadmap.js';
+import { renderWeekMenu, renderWeekDetail, wireLabForms, wireMilestoneForms } from './roadmap.js';
+import { computeWeekUnlocks } from './progress.js';
 import { renderDashboard } from './dashboard.js';
 import { computeStats } from './stats.js';
 import { initRouter } from './router.js';
@@ -116,25 +117,45 @@ if (startedOnPublicRoute) {
   }
 
   async function renderRoadmapRoute(mountEl, isStale) {
-    const milestones = await getMilestones(currentMember.uid);
+    const [milestones, labRuns] = await Promise.all([
+      getMilestones(currentMember.uid),
+      getLabRuns(currentMember.uid),
+    ]);
     if (isStale()) return;
     const milestonesByWeek = {};
     for (const m of milestones) milestonesByWeek[m.week] = m;
 
     const today = new Date().toISOString().slice(0, 10);
     const pacedWeeks = annotateWeekStatus(WEEKS, { weekStart: PROGRAM.weekStart, today });
-    renderRoadmap(mountEl, pacedWeeks, { milestonesByWeek });
-    wireLabForms(mountEl, currentMember.uid);
-    wireLessonStepper(mountEl);
-    wireMilestoneForms(mountEl, {
-      onSubmit: async (data) => {
-        await submitMilestone(currentMember.uid, {
-          ...data,
-          memberName: currentMember.name,
-        });
-        router.refresh();
-      },
-    });
+    const gatedWeeks = computeWeekUnlocks(pacedWeeks, labRuns);
+
+    const match = window.location.hash.match(/^#roadmap\/(\d+)$/);
+    const requestedWeek = match ? gatedWeeks.find((w) => w.week === Number(match[1])) : null;
+
+    if (match && !requestedWeek?.unlocked) {
+      // Locked, or not a real week number -- back to the menu rather than
+      // showing content a member hasn't earned access to yet.
+      window.location.hash = '#roadmap';
+      return;
+    }
+
+    if (requestedWeek) {
+      renderWeekDetail(mountEl, requestedWeek, { milestonesByWeek });
+      wireLabForms(mountEl, currentMember.uid);
+      wireLessonStepper(mountEl);
+      wireMilestoneForms(mountEl, {
+        onSubmit: async (data) => {
+          await submitMilestone(currentMember.uid, {
+            ...data,
+            memberName: currentMember.name,
+          });
+          router.refresh();
+        },
+      });
+      return;
+    }
+
+    renderWeekMenu(mountEl, gatedWeeks);
   }
 
   async function renderLeaderboardRoute(mountEl, isStale) {

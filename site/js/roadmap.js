@@ -4,32 +4,66 @@ import { escapeHtml } from './util.js';
 import { renderLessonStepper } from './lesson.js';
 import { wireMilestoneForms } from './milestones.js';
 
-function renderStatusBadge(w) {
+function renderDateBadge(w) {
   if (w.status === 'current') return '<span class="badge badge--current-week">📍 This week</span>';
-  if (w.status === 'upcoming') return `<span class="badge badge--upcoming">🔒 Opens ${escapeHtml(w.scheduledDate)}</span>`;
+  if (w.status === 'upcoming') return `<span class="badge badge--upcoming">Opens ${escapeHtml(w.scheduledDate)}</span>`;
   return '';
 }
 
-export function renderRoadmap(mountEl, weeks, { milestonesByWeek = {} } = {}) {
-  const cards = weeks
-    .map((w) => `
-      <section class="week-card week-card--${w.status || 'current'}" data-week="${w.week}">
-        <div class="week-card__head">
-          <div class="week-card__badge-row">
-            <span class="week-card__num">Week ${w.week}</span>
-            ${w.lab ? '<span class="badge badge--lab">Lab Track</span>' : '<span class="badge badge--capstone">Capstone Sprint</span>'}
-            ${renderStatusBadge(w)}
-          </div>
-          <h2 class="week-card__title">${escapeHtml(w.title)}</h2>
+function renderMenuTile(w) {
+  const statusBadge = !w.unlocked
+    ? '<span class="badge badge--locked">🔒 Locked</span>'
+    : w.completed
+      ? '<span class="badge badge--completed">✅ Completed</span>'
+      : '<span class="badge badge--current-week">📍 Current</span>';
+
+  const inner = `
+    <div class="week-tile__head">
+      <span class="week-tile__num">Week ${w.week}</span>
+      ${statusBadge}
+    </div>
+    <h3 class="week-tile__title">${escapeHtml(w.title)}</h3>
+    <p class="week-tile__objectives">${escapeHtml(w.objectives)}</p>
+  `;
+
+  return w.unlocked
+    ? `<a class="week-tile" href="#roadmap/${w.week}" data-week="${w.week}">${inner}</a>`
+    : `
+      <div class="week-tile week-tile--locked" data-week="${w.week}">
+        ${inner}
+        <p class="week-tile__lock-note">Complete Week ${w.week - 1} to unlock</p>
+      </div>
+    `;
+}
+
+// The week menu -- a member clicks into one week at a time (its topics,
+// pattern breakdown, quiz, lab and milestone) rather than a page listing
+// all 8 weeks' content at once. A week stays locked until the previous
+// one's lab is passed (see progress.js's computeWeekUnlocks), so there's
+// no skipping ahead to week 5 without having done weeks 1-4.
+export function renderWeekMenu(mountEl, weeks) {
+  const tiles = weeks.map(renderMenuTile).join('');
+  mountEl.innerHTML = `<div class="week-menu">${tiles}</div>`;
+}
+
+export function renderWeekDetail(mountEl, week, { milestonesByWeek = {} } = {}) {
+  mountEl.innerHTML = `
+    <a href="#roadmap" class="week-detail__back">← All weeks</a>
+    <section class="week-card" data-week="${week.week}">
+      <div class="week-card__head">
+        <div class="week-card__badge-row">
+          <span class="week-card__num">Week ${week.week}</span>
+          ${week.lab ? '<span class="badge badge--lab">Lab Track</span>' : '<span class="badge badge--capstone">Capstone Sprint</span>'}
+          ${renderDateBadge(week)}
         </div>
+        <h2 class="week-card__title">${escapeHtml(week.title)}</h2>
+      </div>
 
-        <p class="week-card__objectives">${escapeHtml(w.objectives)}</p>
+      <p class="week-card__objectives">${escapeHtml(week.objectives)}</p>
 
-        ${renderLessonStepper(w, { submission: milestonesByWeek[w.week] })}
-      </section>
-    `)
-    .join('');
-  mountEl.innerHTML = `<div class="week-grid">${cards}</div>`;
+      ${renderLessonStepper(week, { submission: milestonesByWeek[week.week] })}
+    </section>
+  `;
 }
 
 export async function runLabSubmission({ submitLab, recordLabRun, memberId, week, labId, promptText }) {

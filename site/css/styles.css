@@ -12,8 +12,14 @@
   --color-border-subtle: #19243a;
 
   --color-text: #f1f5f9;
+  --color-text-primary: var(--color-text);
   --color-text-secondary: #cbd5e1;
   --color-text-muted: #8493a8;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --transition-fast: 0.15s ease;
 
   /* Google Brand Colors & Accents */
   --color-blue: #3b82f6;
@@ -184,6 +190,98 @@ body {
 
 .week-card--upcoming {
   opacity: 0.85;
+}
+
+/* Week menu -- click into one week at a time, instead of all 8 weeks'
+   full content stacked on one long page. */
+.week-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.week-tile {
+  display: block;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition-fast);
+}
+
+a.week-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-blue);
+  box-shadow: var(--shadow-glow);
+}
+
+.week-tile--locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.week-tile__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.week-tile__num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.week-tile__title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.week-tile__objectives {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.week-tile__lock-note {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.badge--locked {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.badge--completed {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.week-detail__back {
+  display: inline-block;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.week-detail__back:hover {
+  color: var(--color-text);
+  text-decoration: underline;
 }
 
 /* Navigation Bar */
@@ -750,9 +848,10 @@ body {
 .lesson-stepper {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 16px 18px;
-  margin: 12px 0;
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  margin: 14px 0;
+  overflow: hidden;
 }
 
 .lesson-stepper__head {
@@ -760,7 +859,22 @@ body {
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.lesson-stepper__progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-border);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.lesson-stepper__progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-blue), var(--color-purple));
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .lesson-stepper__kind {
@@ -790,6 +904,45 @@ body {
   color: var(--color-text-secondary);
 }
 
+/* Steps used to swap with a hard [hidden] toggle and no transition at all --
+   this is what actually makes moving through a week feel like a course
+   instead of a page flickering. Exit is quicker than entrance: a gentle
+   hand-off reads calmer than a sharp cut, in either direction. */
+.lesson-stepper__panel {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lesson-stepper__panel.is-exiting-forward {
+  opacity: 0;
+  transform: translateX(-14px);
+  transition-duration: 0.16s;
+}
+
+.lesson-stepper__panel.is-exiting-backward {
+  opacity: 0;
+  transform: translateX(14px);
+  transition-duration: 0.16s;
+}
+
+.lesson-stepper__panel.is-entering-forward {
+  opacity: 0;
+  transform: translateX(14px);
+}
+
+.lesson-stepper__panel.is-entering-backward {
+  opacity: 0;
+  transform: translateX(-14px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-stepper__panel,
+  .lesson-stepper__progress-bar {
+    transition: none;
+  }
+}
+
 .lesson-stepper__nav {
   display: flex;
   align-items: center;
@@ -815,10 +968,12 @@ body {
   background: var(--color-border);
   cursor: pointer;
   flex-shrink: 0;
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 .lesson-stepper__dot.is-active {
   background: var(--color-blue);
+  transform: scale(1.25);
 }
 
 .week-card__milestone-box {
@@ -2164,7 +2319,7 @@ body {
   grid-template-columns: 1fr 1.15fr 1fr;
   align-items: flex-end;
   gap: 16px;
-  margin-top: 10px;
+  margin-top: 34px;
 }
 
 .podium-step {
@@ -2185,10 +2340,17 @@ body {
 }
 
 .podium-step--1 {
-  background: linear-gradient(180deg, rgba(251, 188, 5, 0.1) 0%, var(--color-surface) 100%);
-  border-color: rgba(251, 188, 5, 0.4);
+  /* The classic podium silhouette -- 1st visibly taller/raised above 2nd
+     and 3rd -- needs a negative margin, not transform: translateY, since
+     .podium-step:hover already animates transform and a higher-specificity
+     :hover rule would otherwise cancel this card's own elevation the
+     moment it's hovered. */
+  margin-top: -20px;
+  background: linear-gradient(180deg, rgba(251, 188, 5, 0.16) 0%, var(--color-surface) 100%);
+  border-color: rgba(251, 188, 5, 0.55);
+  border-width: 2px;
   padding: 32px 18px 26px;
-  box-shadow: 0 0 24px rgba(251, 188, 5, 0.1);
+  box-shadow: 0 0 32px rgba(251, 188, 5, 0.18);
 }
 
 .podium-step--2 {
@@ -2207,15 +2369,22 @@ body {
 }
 
 .podium-crown {
-  font-size: 1.6rem;
-  margin-bottom: 4px;
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.8rem;
   animation: floatBounce 2.5s ease-in-out infinite;
 }
 
 @keyframes floatBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-4px); }
 }
+
+.podium-step--1 .podium-medal { color: #fbbc05; }
+.podium-step--2 .podium-medal { color: #cbd5e1; }
+.podium-step--3 .podium-medal { color: #d97706; }
 
 .podium-medal {
   font-size: 0.8rem;
@@ -2978,6 +3147,26 @@ body {
 @media (max-width: 768px) {
   .podium {
     grid-template-columns: 1fr;
+    margin-top: 16px;
+  }
+  /* Stacked single-column, the source order that puts 1st place visually
+     in the middle column on desktop (2nd, 1st, 3rd) would otherwise stack
+     2nd place on top -- reorder so 1st actually appears first. The
+     desktop-only elevation and crown placement (tuned for sitting beside
+     shorter 2nd/3rd columns) also don't make sense once everything is one
+     column, so both reset here. */
+  .podium-step--1 {
+    order: -1;
+    margin-top: 0;
+  }
+  .podium-crown {
+    position: static;
+    transform: none;
+    margin-bottom: 4px;
+  }
+  @keyframes floatBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
   }
   .journal-main-grid {
     grid-template-columns: 1fr;
