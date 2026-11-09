@@ -848,9 +848,10 @@ a.week-tile:hover {
 .lesson-stepper {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 16px 18px;
-  margin: 12px 0;
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  margin: 14px 0;
+  overflow: hidden;
 }
 
 .lesson-stepper__head {
@@ -858,7 +859,22 @@ a.week-tile:hover {
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.lesson-stepper__progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-border);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.lesson-stepper__progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-blue), var(--color-purple));
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .lesson-stepper__kind {
@@ -888,6 +904,45 @@ a.week-tile:hover {
   color: var(--color-text-secondary);
 }
 
+/* Steps used to swap with a hard [hidden] toggle and no transition at all --
+   this is what actually makes moving through a week feel like a course
+   instead of a page flickering. Exit is quicker than entrance: a gentle
+   hand-off reads calmer than a sharp cut, in either direction. */
+.lesson-stepper__panel {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lesson-stepper__panel.is-exiting-forward {
+  opacity: 0;
+  transform: translateX(-14px);
+  transition-duration: 0.16s;
+}
+
+.lesson-stepper__panel.is-exiting-backward {
+  opacity: 0;
+  transform: translateX(14px);
+  transition-duration: 0.16s;
+}
+
+.lesson-stepper__panel.is-entering-forward {
+  opacity: 0;
+  transform: translateX(14px);
+}
+
+.lesson-stepper__panel.is-entering-backward {
+  opacity: 0;
+  transform: translateX(-14px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-stepper__panel,
+  .lesson-stepper__progress-bar {
+    transition: none;
+  }
+}
+
 .lesson-stepper__nav {
   display: flex;
   align-items: center;
@@ -913,10 +968,12 @@ a.week-tile:hover {
   background: var(--color-border);
   cursor: pointer;
   flex-shrink: 0;
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 .lesson-stepper__dot.is-active {
   background: var(--color-blue);
+  transform: scale(1.25);
 }
 
 .week-card__milestone-box {
