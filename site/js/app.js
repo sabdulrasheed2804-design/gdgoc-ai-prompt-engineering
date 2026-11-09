@@ -329,6 +329,7 @@ if (startedOnPublicRoute) {
 
     if (!memberDoc?.registered) {
       signInButton.textContent = member.name || 'Member';
+      signInButton.hidden = false;
       navEl.hidden = true;
       renderRegistrationForm(appEl, { ...member, ...memberDoc });
       wireProfileForm(appEl, async (formData) => {
@@ -357,6 +358,7 @@ if (startedOnPublicRoute) {
 
     currentMember = { ...member, ...memberDoc };
     signInButton.textContent = currentMember.name;
+    signInButton.hidden = false;
     navEl.hidden = false;
     setupRouter();
   });
