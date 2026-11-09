@@ -12,8 +12,14 @@
   --color-border-subtle: #19243a;
 
   --color-text: #f1f5f9;
+  --color-text-primary: var(--color-text);
   --color-text-secondary: #cbd5e1;
   --color-text-muted: #8493a8;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --transition-fast: 0.15s ease;
 
   /* Google Brand Colors & Accents */
   --color-blue: #3b82f6;
@@ -2164,7 +2170,7 @@ body {
   grid-template-columns: 1fr 1.15fr 1fr;
   align-items: flex-end;
   gap: 16px;
-  margin-top: 10px;
+  margin-top: 34px;
 }
 
 .podium-step {
@@ -2185,10 +2191,17 @@ body {
 }
 
 .podium-step--1 {
-  background: linear-gradient(180deg, rgba(251, 188, 5, 0.1) 0%, var(--color-surface) 100%);
-  border-color: rgba(251, 188, 5, 0.4);
+  /* The classic podium silhouette -- 1st visibly taller/raised above 2nd
+     and 3rd -- needs a negative margin, not transform: translateY, since
+     .podium-step:hover already animates transform and a higher-specificity
+     :hover rule would otherwise cancel this card's own elevation the
+     moment it's hovered. */
+  margin-top: -20px;
+  background: linear-gradient(180deg, rgba(251, 188, 5, 0.16) 0%, var(--color-surface) 100%);
+  border-color: rgba(251, 188, 5, 0.55);
+  border-width: 2px;
   padding: 32px 18px 26px;
-  box-shadow: 0 0 24px rgba(251, 188, 5, 0.1);
+  box-shadow: 0 0 32px rgba(251, 188, 5, 0.18);
 }
 
 .podium-step--2 {
@@ -2207,15 +2220,22 @@ body {
 }
 
 .podium-crown {
-  font-size: 1.6rem;
-  margin-bottom: 4px;
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.8rem;
   animation: floatBounce 2.5s ease-in-out infinite;
 }
 
 @keyframes floatBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-4px); }
 }
+
+.podium-step--1 .podium-medal { color: #fbbc05; }
+.podium-step--2 .podium-medal { color: #cbd5e1; }
+.podium-step--3 .podium-medal { color: #d97706; }
 
 .podium-medal {
   font-size: 0.8rem;
@@ -2978,6 +2998,26 @@ body {
 @media (max-width: 768px) {
   .podium {
     grid-template-columns: 1fr;
+    margin-top: 16px;
+  }
+  /* Stacked single-column, the source order that puts 1st place visually
+     in the middle column on desktop (2nd, 1st, 3rd) would otherwise stack
+     2nd place on top -- reorder so 1st actually appears first. The
+     desktop-only elevation and crown placement (tuned for sitting beside
+     shorter 2nd/3rd columns) also don't make sense once everything is one
+     column, so both reset here. */
+  .podium-step--1 {
+    order: -1;
+    margin-top: 0;
+  }
+  .podium-crown {
+    position: static;
+    transform: none;
+    margin-bottom: 4px;
+  }
+  @keyframes floatBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
   }
   .journal-main-grid {
     grid-template-columns: 1fr;
