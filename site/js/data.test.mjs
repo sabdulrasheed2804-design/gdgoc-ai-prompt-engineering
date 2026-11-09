@@ -2,9 +2,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { WEEKS } from './data.js';
 
-test('every week has a non-empty topics list and resources list', () => {
+test('every week has a non-empty topics list, each with a real explanation, not just a label', () => {
   for (const w of WEEKS) {
     assert.ok(Array.isArray(w.topics) && w.topics.length > 0, `week ${w.week} topics`);
+    for (const t of w.topics) {
+      assert.ok(typeof t.title === 'string' && t.title.length > 0, `week ${w.week} topic title`);
+      // A one-line label isn't an explanation -- this is what makes "topic by
+      // topic" pacing meaningful instead of just a fancier bullet list.
+      assert.ok(t.explanation.length > 200, `week ${w.week} topic "${t.title}" needs a real explanation`);
+    }
+  }
+});
+
+test('every week has a non-empty resources list', () => {
+  for (const w of WEEKS) {
     assert.ok(Array.isArray(w.resources) && w.resources.length > 0, `week ${w.week} resources`);
     for (const r of w.resources) {
       assert.equal(typeof r.title, 'string');

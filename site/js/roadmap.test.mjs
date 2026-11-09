@@ -40,14 +40,15 @@ test('surfaces the submitLab error message on failure', async () => {
   assert.equal(outcome.text, 'cap reached');
 });
 
-test('renders topics and resources for a week that has them', () => {
+test('renders topics (one at a time via the stepper) and resources for a week that has them', () => {
   const el = { innerHTML: '' };
   renderRoadmap(el, [{
     week: 1, title: 'T', objectives: 'x', milestone: 'm',
-    topics: ['Topic one'],
+    topics: [{ title: 'Topic one', explanation: 'Explanation one' }],
     resources: [{ title: 'Res one', url: 'https://example.com' }],
   }]);
   assert.match(el.innerHTML, /Topic one/);
+  assert.match(el.innerHTML, /Explanation one/);
   assert.match(el.innerHTML, /Res one/);
   assert.match(el.innerHTML, /href="https:\/\/example\.com"/);
 });
@@ -56,7 +57,7 @@ test('escapes HTML in topics and resource titles', () => {
   const el = { innerHTML: '' };
   renderRoadmap(el, [{
     week: 1, title: 'T', objectives: 'x', milestone: 'm',
-    topics: ['<script>'],
+    topics: [{ title: '<script>', explanation: '<img onerror=x>' }],
     resources: [{ title: '<img onerror=x>', url: 'https://example.com' }],
   }]);
   assert.doesNotMatch(el.innerHTML, /<script>/);
