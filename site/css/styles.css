@@ -72,7 +72,7 @@ body {
 /* Header & Navigation */
 .site-header {
   position: sticky;
-  top: 0;
+  top: 4px;
   z-index: 50;
   display: flex;
   align-items: center;
@@ -91,24 +91,24 @@ body {
   gap: 14px;
 }
 
+.brand-bar {
+  height: 4px;
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: linear-gradient(
+    to right,
+    #4285f4 0% 25%,
+    #ea4335 25% 50%,
+    #fbbc05 50% 75%,
+    #34a853 75% 100%
+  );
+}
+
 .brand-logo {
-  display: flex;
-  gap: 4px;
-  align-items: center;
+  flex-shrink: 0;
 }
-
-.brand-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-  box-shadow: 0 0 8px currentColor;
-}
-
-.brand-dot--blue { background: #4285f4; color: rgba(66, 133, 244, 0.5); }
-.brand-dot--red { background: #ea4335; color: rgba(234, 67, 53, 0.5); }
-.brand-dot--yellow { background: #fbbc05; color: rgba(251, 188, 5, 0.5); }
-.brand-dot--green { background: #34a853; color: rgba(52, 168, 83, 0.5); }
 
 .site-header__title-row {
   display: flex;
@@ -204,7 +204,7 @@ body {
 /* Navigation Bar */
 .site-nav {
   position: sticky;
-  top: 61px;
+  top: 65px;
   z-index: 40;
   background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border);
@@ -1328,7 +1328,6 @@ body {
 }
 
 .registration-card__head .brand-logo {
-  justify-content: center;
   margin-bottom: 12px;
 }
 

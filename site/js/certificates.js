@@ -150,12 +150,11 @@ export function renderPublicCertificateVerification(mountEl, cert) {
       <div class="public-cert-card">
         <div class="public-cert-details">
           <div class="cert-detail-header">
-            <div class="brand-logo" aria-hidden="true">
-              <span class="brand-dot brand-dot--blue"></span>
-              <span class="brand-dot brand-dot--red"></span>
-              <span class="brand-dot brand-dot--yellow"></span>
-              <span class="brand-dot brand-dot--green"></span>
-            </div>
+            <svg class="brand-logo" aria-hidden="true" viewBox="0 0 32 24" width="32" height="24" fill="none" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 3 4 12l10 9" stroke="#4285f4" />
+              <path d="M18 3l10 9" stroke="#ea4335" />
+              <path d="M28 12 18 21" stroke="#34a853" />
+            </svg>
             <div>
               <h2 class="public-cert-recipient">${recipientName}</h2>
               <p class="public-cert-subtitle">${trackName} · ${faculty}</p>
