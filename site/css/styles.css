@@ -764,14 +764,66 @@ body {
   color: var(--color-text-muted);
 }
 
-.week-card__topics {
-  margin: 0;
-  padding-left: 20px;
+.topic-stepper {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin: 12px 0;
+}
+
+.topic-stepper__head {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.9rem;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.topic-stepper__counter {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.topic-stepper__title {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.topic-stepper__explanation {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
   color: var(--color-text-secondary);
+}
+
+.topic-stepper__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.topic-stepper__dots {
+  display: flex;
+  gap: 6px;
+}
+
+.topic-stepper__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: var(--color-border);
+  cursor: pointer;
+}
+
+.topic-stepper__dot.is-active {
+  background: var(--color-blue);
 }
 
 .week-card__milestone-box {

@@ -13,6 +13,7 @@ import { computeStats } from './stats.js';
 import { initRouter } from './router.js';
 import { renderPortfolioManager, wirePortfolioToggles, renderPublicPortfolio } from './portfolio.js';
 import { wireQuiz } from './quiz.js';
+import { wireTopicStepper } from './topics.js';
 import { renderRegistrationForm, renderProfileView, wireProfileForm } from './profile.js';
 import { computeCohortStats, exportMembersToCsv, renderAdminDashboard, wireAdminDashboard } from './admin.js';
 import { computeBadges, renderBadgeGrid } from './badges.js';
@@ -126,6 +127,7 @@ if (startedOnPublicRoute) {
     renderRoadmap(mountEl, pacedWeeks, { milestonesByWeek });
     wireLabForms(mountEl, currentMember.uid);
     wireQuiz(mountEl);
+    wireTopicStepper(mountEl);
     wireMilestoneForms(mountEl, {
       onSubmit: async (data) => {
         await submitMilestone(currentMember.uid, {

@@ -3,11 +3,26 @@ export const WEEK1 = {
   title: 'Foundations of LLMs & Prompting',
   objectives: 'Understand how LLMs generate text, write clear and specific prompts, and get the dev environment talking to a real model API.',
   topics: [
-    'How LLMs generate text: next-token prediction, temperature and sampling',
-    'Tokens, context windows, and why prompt length has a cost and a limit',
-    'Zero-shot vs. few-shot prompting',
-    'System prompts vs. user prompts vs. assistant turns',
-    'Calling a real model API: auth, request/response shape, rate limits',
+    {
+      title: 'How LLMs generate text: next-token prediction, temperature and sampling',
+      explanation: "A large language model doesn't \"know\" an answer the way a database does — at every step it computes a probability for every possible next token (a word piece) given everything written so far, then samples one. Temperature controls how that sampling behaves: near 0, it almost always picks the single most likely token (deterministic, repetitive); higher values flatten the distribution so less-likely tokens get picked more often (more varied, occasionally surprising). This is why the same prompt can give slightly different answers each time, and why \"the model is being creative\" or \"the model is being precise\" is really just a sampling-parameter choice, not a mood.",
+    },
+    {
+      title: 'Tokens, context windows, and why prompt length has a cost and a limit',
+      explanation: "Models don't read in whole words — they read tokens, roughly 3-4 characters of common text (a whole word, a word fragment, or punctuation). Every model has a fixed context window: the maximum number of tokens it can hold in memory at once, covering your system prompt, the conversation history, and the model's own reply, all sharing the same budget. Go over that limit and the oldest content gets truncated or the request fails outright, and since API billing is usually per-token, a longer prompt is also a more expensive one — so a well-engineered prompt says what's needed precisely, not exhaustively.",
+    },
+    {
+      title: 'Zero-shot vs. few-shot prompting',
+      explanation: 'Zero-shot means asking the model to do a task by describing it in words alone, with no worked examples — "classify this review as positive or negative." Few-shot means showing the model one or more worked input→output examples directly in the prompt before giving it the real task, which often produces more reliable, more consistently-formatted results because the model is pattern-matching against concrete demonstrations rather than inferring your intent from a description. The tradeoff is token cost: each example adds length (and therefore cost) to every single request, so few-shot is a deliberate reliability-for-tokens trade, not a free upgrade.',
+    },
+    {
+      title: 'System prompts vs. user prompts vs. assistant turns',
+      explanation: "A conversation with an LLM is made of typed messages, not just one blob of text. The system prompt is set once, usually by the developer, and establishes persistent behavior — the model's persona, its rules, its output format — and generally carries more weight than anything said later. User messages are the specific requests or questions in that conversation; assistant messages are the model's own prior replies, included so it has memory of what it already said. Keeping these roles distinct, rather than mashing instructions and user data into one string, is what makes a prompt predictable and lets you change behavior without rewriting every user-facing message.",
+    },
+    {
+      title: 'Calling a real model API: auth, request/response shape, rate limits',
+      explanation: "Behind every chat interface is an HTTP API: you send a JSON request (model name, messages, parameters like temperature) with an API key proving who's calling, and get back a JSON response containing the generated text plus metadata like token usage. Every provider enforces rate limits — a cap on requests or tokens per minute — so production code needs to handle \"too many requests\" errors with backoff and retries, not just the happy path. Understanding this shape matters because it's the same contract whether you're calling it from a browser, a server, or — as in this cluster's labs — a Cloudflare Worker grading your submission.",
+    },
   ],
   promptComparison: {
     technique: 'Role Persona & Explicit JSON Contract',
@@ -70,11 +85,26 @@ export const WEEK2 = {
   title: 'Prompt Patterns & Structured Output',
   objectives: 'Use few-shot examples effectively, produce reliable structured output, and control tone and format on demand.',
   topics: [
-    'Few-shot prompting: choosing and ordering examples',
-    'Getting reliable structured output (JSON) from a model',
-    'Validating model output against a schema in code',
-    'Controlling tone, format and length on demand',
-    'Common failure modes: malformed JSON, extra prose around the answer',
+    {
+      title: 'Few-shot prompting: choosing and ordering examples',
+      explanation: "Building on week 1's zero-shot/few-shot distinction: once you decide to show examples, which ones and in what order actually changes the result. Examples should cover the range of cases you care about (not five near-identical ones), and should be balanced across categories — three examples of one class and one of another can bias the model toward over-predicting the majority class. Order matters too: models can pick up on positional patterns, so the last example in the list tends to have outsized influence; shuffling or deliberately ordering examples is a real lever, not a cosmetic choice.",
+    },
+    {
+      title: 'Getting reliable structured output (JSON) from a model',
+      explanation: 'When your code needs to parse a model\'s answer, free-form prose is a liability — you want a fixed shape like {"category": "..."} every time. The most reliable way to get that is to state the exact schema in the prompt, show an example of valid output, and explicitly forbid anything else ("return ONLY the JSON object, no other text"). Some APIs also offer schema-constrained generation modes that mechanically restrict what the model can produce, which is even more reliable than instructions alone when it\'s available.',
+    },
+    {
+      title: 'Validating model output against a schema in code',
+      explanation: "Even a well-prompted model will occasionally return malformed or unexpected output, so treat its response as untrusted input, the same way you'd treat anything from outside your system. That means parsing it and validating the result against the schema you expect in your own code — not just trusting that the prompt worked — and having an explicit path for what happens when it doesn't (retry, fall back to a default, or surface an error to the user). Skipping this step is the single most common way a prompt that worked in testing breaks in production.",
+    },
+    {
+      title: 'Controlling tone, format and length on demand',
+      explanation: 'Beyond structure, a prompt can explicitly direct style: "respond in two sentences," "use a formal tone," "avoid technical jargon," "answer only in bullet points." These constraints work the same way schema constraints do — stated explicitly, not implied — and they compose: you can ask for a JSON object where one field is terse and another is detailed. The more specific and concrete the instruction ("under 50 words" beats "be brief") the more reliably the model follows it.',
+    },
+    {
+      title: 'Common failure modes: malformed JSON, extra prose around the answer',
+      explanation: 'The most frequent structured-output failure isn\'t wrong content, it\'s wrong wrapping: a model adding "Sure, here\'s the JSON:" before the object, wrapping it in markdown code fences, or producing almost-valid JSON with a trailing comma. Each of these breaks a naive parse call even though the actual data inside is fine. Knowing these specific failure shapes in advance means you can write prompts that preempt them (an explicit "no other text" instruction) and code that\'s forgiving of them (stripping code fences before parsing) rather than being surprised by them mid-demo.',
+    },
   ],
   promptComparison: {
     technique: 'Few-Shot Grounding & Format Anchoring',
@@ -129,11 +159,26 @@ export const WEEK3 = {
   title: 'Reasoning Techniques',
   objectives: 'Elicit multi-step reasoning, decompose complex tasks, and improve reliability through self-consistency.',
   topics: [
-    'Chain-of-thought prompting: eliciting step-by-step reasoning',
-    'Decomposing a complex task into smaller sub-steps',
-    'Self-consistency: sampling multiple reasoning paths and taking a majority',
-    'When visible reasoning helps vs. when it just adds cost/latency',
-    "Separating a 'reasoning' field from a 'final answer' field in output",
+    {
+      title: 'Chain-of-thought prompting: eliciting step-by-step reasoning',
+      explanation: "For anything beyond simple lookups — arithmetic, multi-step logic, anything requiring the model to combine several facts — asking for the final answer directly often produces a confident but wrong guess, because the model is predicting an answer token-by-token with no space to \"work it out.\" Chain-of-thought prompting asks the model to show its reasoning first (\"think step by step\"), which gives it the equivalent of scratch paper: each intermediate step becomes part of the context the next step conditions on, and that materially improves accuracy on problems that require more than one logical hop.",
+    },
+    {
+      title: 'Decomposing a complex task into smaller sub-steps',
+      explanation: "Chain-of-thought is one specific case of a broader idea: hard problems are usually solved more reliably as a sequence of smaller, individually-checkable sub-problems rather than one giant leap. Breaking \"plan and build a feature\" into \"list requirements → design the interface → write the code → test it\" lets you, or the model, verify each piece before moving to the next, and makes it obvious exactly where something went wrong when it does. This is the same instinct experienced engineers apply to any hard problem, just made explicit in the prompt.",
+    },
+    {
+      title: 'Self-consistency: sampling multiple reasoning paths and taking a majority',
+      explanation: 'Because sampling involves randomness, asking the same reasoning question twice can produce two different chains of thought — and occasionally, two different final answers. Self-consistency exploits this: generate several independent reasoning attempts (often with a non-zero temperature) and take whichever final answer shows up most often, on the logic that a correct conclusion is more likely to be reached by multiple independent paths than any single specific wrong path is to repeat. It costs more (multiple model calls instead of one) but can meaningfully raise accuracy on hard reasoning tasks.',
+    },
+    {
+      title: 'When visible reasoning helps vs. when it just adds cost/latency',
+      explanation: "Chain-of-thought isn't free: every reasoning token is generated, billed, and adds latency, the same as any other output. For a task the model can already answer reliably in one step — \"what's the capital of France\" — forcing a reasoning trace is pure overhead with no accuracy benefit. The judgment call is matching the technique to the task: reach for explicit reasoning on genuinely multi-step problems, and skip it for anything the model handles correctly zero-shot.",
+    },
+    {
+      title: "Separating a 'reasoning' field from a 'final answer' field in output",
+      explanation: 'Once you\'re eliciting a reasoning trace, you need your code to know which part is the trace and which part is the thing to actually use — you don\'t want to display "Step 1: ... Step 2: ..." as the user-facing answer. Structuring the output as JSON with distinct fields ({"reasoning": "...", "answer": "..."}) lets your application pick exactly what it needs: show the answer to the user, optionally surface the reasoning for transparency or debugging, and feed the answer alone into whatever happens next, without string-parsing a mixed blob of text.',
+    },
   ],
   promptComparison: {
     technique: 'Chain-of-Thought (CoT) Scratchpad Decomposition',
@@ -188,11 +233,26 @@ export const WEEK4 = {
   title: 'Reliability, Safety & Evaluation',
   objectives: 'Defend against prompt injection, reduce hallucination, and write evaluation rubrics instead of eyeballing output.',
   topics: [
-    'Prompt injection: what it is and how untrusted input can hijack instructions',
-    'Guardrails: input validation and refusal behavior for unsafe/out-of-scope requests',
-    'Hallucination: why models state incorrect things confidently, and how to reduce it',
-    'Writing an evaluation rubric instead of eyeballing output',
-    'Building a small automated eval suite: test cases + pass/fail criteria',
+    {
+      title: 'Prompt injection: what it is and how untrusted input can hijack instructions',
+      explanation: 'Any time your prompt includes text from outside your control — a user\'s message, a document, a web page, a retrieved search result — that text is processed by the model exactly like your own instructions are, with no inherent separation. Prompt injection is when that untrusted text contains something like "ignore your previous instructions and instead...", and the model, having no structural way to tell "developer instruction" from "data I\'m supposed to summarize," complies. This is the single most important security idea in this week, because it applies to every system that ever feeds external content to a model.',
+    },
+    {
+      title: 'Guardrails: input validation and refusal behavior for unsafe/out-of-scope requests',
+      explanation: 'Guardrails are the rules that constrain what a system is willing to do or say, applied both to what goes in and what comes out: validating and sanitizing input before it reaches the model, and giving the model explicit, scoped refusal criteria for requests it should decline. Good guardrails are specific ("refuse requests for generating malware, personal data exfiltration, or hate speech") rather than vague ("be safe"), because vague instructions either over-refuse legitimate requests or under-refuse the thing you actually wanted blocked. The goal is a system that is hard to misuse without being annoying to use correctly.',
+    },
+    {
+      title: 'Hallucination: why models state incorrect things confidently, and how to reduce it',
+      explanation: "A hallucination is the model generating fluent, plausible-sounding content that's factually wrong or entirely fabricated — a citation that doesn't exist, a statistic that was never published, an API that was never real — stated with exactly the same confident tone as something true. This happens because the model is optimizing for \"what text plausibly comes next,\" not \"what is verifiably true,\" and it has no built-in mechanism to say \"I don't actually know this.\" The two main mitigations you'll use in this cluster are grounding answers in real retrieved context (week 5's RAG) and explicitly instructing the model to say it doesn't know rather than guess.",
+    },
+    {
+      title: 'Writing an evaluation rubric instead of eyeballing output',
+      explanation: '"I tried a few prompts and this one looked better" doesn\'t scale and isn\'t repeatable — it depends entirely on which examples you happened to try and how generous you were feeling. A rubric defines, in advance, exactly what counts as a pass: specific criteria, specific test inputs, and an explicit scoring method, so that any two people (or the same person on two different days) grading the same output reach the same conclusion. This is also exactly how this cluster\'s own labs are graded — a rubric, not a human\'s gut feeling — and writing your own is the same discipline applied to your own work.',
+    },
+    {
+      title: 'Building a small automated eval suite: test cases + pass/fail criteria',
+      explanation: 'An eval suite operationalizes a rubric: a set of representative inputs, ideally covering typical cases and known edge cases, run automatically against your prompt, with each result checked against explicit pass/fail criteria, producing a pass rate rather than a single anecdote. This is what catches a prompt change that fixes one case but quietly breaks three others — the kind of regression that is invisible if you only ever retest the one example you were worried about. Even a small suite of 10-20 cases, run before and after every prompt change, is enough to catch most regressions.',
+    },
   ],
   promptComparison: {
     technique: 'Delimiter Fencing & Negative Guardrails',
@@ -247,11 +307,26 @@ export const WEEK5 = {
   title: 'Retrieval-Augmented Generation (RAG)',
   objectives: 'Understand embeddings and semantic search, ground model answers in real documents, and cut hallucination via retrieval.',
   topics: [
-    'Embeddings and semantic search: representing meaning as vectors',
-    'Chunking documents for retrieval',
-    'Grounding model answers in retrieved context instead of parametric memory',
-    "Citing sources so an answer's grounding can be checked",
-    "Recognizing when retrieved context doesn't actually answer the question",
+    {
+      title: 'Embeddings and semantic search: representing meaning as vectors',
+      explanation: 'An embedding model converts a piece of text into a list of numbers (a vector) positioned in a high-dimensional space such that texts with similar meaning end up close together — "dog" and "puppy" land near each other, "dog" and "spreadsheet" land far apart, even though none of those words literally overlap. This is what makes semantic search possible: instead of matching keywords, you compare vectors and find the closest ones, which is how a search for "cancel my subscription" can retrieve a document titled "ending your plan" that never uses the word "cancel" at all.',
+    },
+    {
+      title: 'Chunking documents for retrieval',
+      explanation: "You can't usefully embed an entire 50-page document as one vector — too many distinct ideas get averaged together, and it wouldn't fit any reasonable context window alongside the question anyway. Chunking splits documents into smaller, topically-focused pieces (a paragraph, a section, a few hundred tokens) before embedding each one separately, so a search can retrieve the specific chunk that actually discusses what's being asked about, rather than a whole document that mentions it somewhere.",
+    },
+    {
+      title: 'Grounding model answers in retrieved context instead of parametric memory',
+      explanation: "A model's \"parametric memory\" is whatever it absorbed during training — frozen at a point in time, and never verifiably sourced. RAG (retrieval-augmented generation) instead retrieves relevant chunks from your own documents at the moment of the question and includes them directly in the prompt, instructing the model to answer using that supplied context rather than its own memory. This is strictly more current (your documents can be updated anytime) and more verifiable (you can point at exactly which text the answer came from) than relying on what the model happened to learn during training.",
+    },
+    {
+      title: "Citing sources so an answer's grounding can be checked",
+      explanation: 'An ungrounded claim and a grounded one can read identically if you only see the final answer — the difference only becomes checkable if the answer references which retrieved chunk it came from, e.g. "[Doc-2] states that...". Requiring citations in the output format turns "trust me" into "here\'s where to verify this," which is the entire point of building a RAG system instead of just asking the model directly: the whole value proposition depends on being able to audit the answer against its source.',
+    },
+    {
+      title: "Recognizing when retrieved context doesn't actually answer the question",
+      explanation: "Retrieval isn't perfect — sometimes the closest-matching chunks are related to the topic but don't actually contain the specific fact being asked about. A naive prompt will often fill that gap with a plausible-sounding guess anyway, which is actually worse than no RAG at all, since it looks grounded but isn't. A well-designed RAG prompt is explicitly instructed to recognize this case and say so (e.g. a grounded:false flag) rather than quietly hallucinating on top of real-looking context.",
+    },
   ],
   promptComparison: {
     technique: 'Grounded Retrieval with Negative Fallback',
@@ -306,11 +381,26 @@ export const WEEK6 = {
   title: 'Tool Use & Function Calling',
   objectives: 'Give the model real capabilities beyond text, design safe and well-specified tool schemas, and handle tool outputs and failures.',
   topics: [
-    'Why models need tools: capabilities beyond generating text',
-    'Designing a tool/function schema: name, description, parameters',
-    'Deciding when a tool call is needed vs. not',
-    'Handling tool outputs and errors in the conversation loop',
-    'Keeping tool access safe and scoped (least privilege)',
+    {
+      title: 'Why models need tools: capabilities beyond generating text',
+      explanation: 'An LLM can only produce text — it can\'t check today\'s weather, run a real calculation reliably at scale, query a live database, or send an email, because none of that is "predict the next token," it\'s taking an action in the world. Tool use (also called function calling) bridges that gap: the model is given a menu of real functions it can request, and your code actually executes them and feeds the result back, so the system as a whole can do things a pure text generator never could on its own.',
+    },
+    {
+      title: 'Designing a tool/function schema: name, description, parameters',
+      explanation: "A tool is defined by a schema the model reads before deciding whether and how to use it: a name, a description of what it does and — critically — when to use it, and a precise specification of what arguments it takes and their types. The model's decision to call a tool, and how correctly it fills in the arguments, depends entirely on how clear and complete this schema is; a vague description (\"does math stuff\") produces unreliable calls the same way a vague prompt produces unreliable text.",
+    },
+    {
+      title: 'Deciding when a tool call is needed vs. not',
+      explanation: '"What\'s 2+2" doesn\'t need a calculator function any more than "who wrote Hamlet" needs a search call, and over-calling tools adds real latency and cost for no benefit. Good tool-use design makes the decision boundary explicit in the prompt — when to call, when to just answer — so the model reserves tool calls for cases that genuinely require them: real-time data, precise computation, or anything it can\'t reliably produce from its own knowledge.',
+    },
+    {
+      title: 'Handling tool outputs and errors in the conversation loop',
+      explanation: "After a tool is called, its result (or its error) gets fed back into the conversation as a new message, and the model continues from there — this is a loop, not a single shot. If a tool fails (an API times out, invalid input, no results found), that failure needs to flow back into the conversation explicitly so the model or your application logic can decide how to respond, rather than silently proceeding as if nothing went wrong or fabricating a plausible-looking result to paper over the gap.",
+    },
+    {
+      title: 'Keeping tool access safe and scoped (least privilege)',
+      explanation: "Since a model's decision to call a tool can be influenced by whatever text it's processing — including injected instructions inside retrieved documents or user content, see week 4 — every tool should be scoped to the minimum capability it actually needs. A send-email tool that can only send to pre-approved addresses is far safer than one that can send anywhere; a database tool that can only read, never write or delete, limits the worst case if the model is ever tricked into misusing it. Least privilege here isn't paranoia, it's the same principle applied to a system whose decisions you can't fully predict in advance.",
+    },
   ],
   promptComparison: {
     technique: 'Strict Tool Decision Boundary',
@@ -365,11 +455,26 @@ export const WEEK7 = {
   title: 'Agents & Multi-Step Workflows',
   objectives: 'Build an agent loop (plan, act, observe, repeat), manage memory and state, and evaluate agents on task success, not just output quality.',
   topics: [
-    'The plan-act-observe loop: how an agent structures multi-step work',
-    'Managing memory and state across steps',
-    'Stopping conditions: knowing when an agent is done (or stuck)',
-    'Evaluating agents on task success, not just output quality',
-    'Failure modes specific to agents: loops, drift, compounding errors',
+    {
+      title: 'The plan-act-observe loop: how an agent structures multi-step work',
+      explanation: "An agent is a model wired into a loop rather than a single call: it plans a next step toward some goal, takes an action (often a tool call), observes the result, and then re-plans based on what it just learned, repeating until the goal is reached or it gives up. This is what separates an \"agent\" from a chatbot that happens to use tools — the defining feature is that later steps are informed by the actual outcomes of earlier ones, not just a fixed pre-written sequence.",
+    },
+    {
+      title: 'Managing memory and state across steps',
+      explanation: "Each call to the model is independent — it has no built-in memory of a previous step unless you explicitly include it. An agent therefore has to carry forward whatever context matters: the original goal, the plan so far, prior tool results, anything decided earlier, usually as part of the prompt for the next step. Getting this state-passing right is most of what makes a multi-step agent actually coherent instead of repeating itself or contradicting its own earlier decisions.",
+    },
+    {
+      title: 'Stopping conditions: knowing when an agent is done (or stuck)',
+      explanation: 'Without an explicit way to know it\'s finished, a loop either runs forever or stops arbitrarily. A stopping condition can be task-based ("the goal has been achieved"), a hard limit ("no more than 10 steps"), or a stuck-detector ("the last three steps produced no new progress") — and a real agent needs at least one of these, because an unbounded loop wastes cost and time and, worse, never reliably hands a result back to whoever is waiting on it.',
+    },
+    {
+      title: 'Evaluating agents on task success, not just output quality',
+      explanation: "Each individual step of an agent can look perfectly reasonable — well-formatted, grammatically fine, confidently stated — while the agent as a whole still fails to actually achieve the goal it was given, for example looping without progress or confidently reporting success on a task it never completed. Evaluating an agent therefore means checking the end-to-end outcome against the original goal, not grading each step's prose in isolation; a beautiful-looking trace that doesn't deliver the result is a failure, however fluent it reads.",
+    },
+    {
+      title: 'Failure modes specific to agents: loops, drift, compounding errors',
+      explanation: "Multi-step systems fail in ways single-turn prompts don't: an early misread observation can cascade into every subsequent step being built on a wrong premise (compounding error); a stuck agent can repeat the same unsuccessful action indefinitely (a loop); and a long chain of steps can slowly wander from the original goal as context gets diluted or misinterpreted (drift). Recognizing these specific patterns, rather than treating every failure as a generic \"the model got it wrong,\" is what lets you design stopping conditions and checks that actually catch them.",
+    },
   ],
   promptComparison: {
     technique: 'Plan-Act-Observe-Reflect Loop',
@@ -424,10 +529,22 @@ export const WEEK8 = {
   title: 'Capstone Sprint & Demo Day',
   objectives: 'Polish the assistant into something presentable, demo it clearly, and ship a professional artifact members can point to afterward.',
   topics: [
-    'Structuring a clear, time-boxed technical demo',
-    'Anticipating and handling Q&A on design decisions',
-    'Curating a prompt portfolio that shows range: structured output, reasoning, guardrails, RAG, tools, agent loop',
-    'Writing a short public write-up of what was built',
+    {
+      title: 'Structuring a clear, time-boxed technical demo',
+      explanation: "A 5-minute demo slot disappears fast, so it needs a deliberate structure, not a live improvised tour: what the project is and why (10-15 seconds), the single most impressive capability shown working live (the bulk of the time), then a quick look at the range of other capabilities built across the 8 weeks. Rehearsing against the actual clock matters more than it sounds like it should — most first attempts run long, and a demo that gets cut off mid-sentence leaves a worse impression than a shorter, complete one.",
+    },
+    {
+      title: 'Anticipating and handling Q&A on design decisions',
+      explanation: "After a demo, the questions that come are almost always about decisions, not features: why did you choose this guardrail approach, how does the RAG grounding actually get verified, what happens if the tool call fails. Reviewing your own milestone write-ups beforehand and being ready to explain the reasoning behind a choice, including its limitations, reads as far more credible than pretending every decision was obviously correct — \"here's the trade-off I made and why\" is a stronger answer than defending a choice as if it had none.",
+    },
+    {
+      title: 'Curating a prompt portfolio that shows range: structured output, reasoning, guardrails, RAG, tools, agent loop',
+      explanation: "The portfolio feature built into this platform lets you publish your best-scoring prompt from each week — the goal isn't to publish every single submission, it's to pick the entries that, together, demonstrate the full range of techniques covered: a clean JSON contract, a reasoning trace, a guardrail that correctly refuses something, a grounded RAG answer, a well-scoped tool call, an agent plan. A viewer skimming the portfolio should come away understanding the breadth of what you can do, not just that you can do one thing well.",
+    },
+    {
+      title: 'Writing a short public write-up of what was built',
+      explanation: "A short written summary — what the assistant does, which techniques from the 8 weeks it combines, what you'd improve with more time — is what makes the project legible to someone who wasn't in the room for the demo: a future employer, a teammate, or just future-you in six months. It doesn't need to be long; it needs to say clearly what exists and why it's built the way it is, the same clarity you'd want from documentation on any real project.",
+    },
   ],
   resources: [
     {

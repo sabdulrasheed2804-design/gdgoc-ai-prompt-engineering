@@ -2,6 +2,7 @@ import { submitLab } from './grading-client.js';
 import { recordLabRun } from './store.js';
 import { escapeHtml } from './util.js';
 import { renderQuiz } from './quiz.js';
+import { renderTopicStepper } from './topics.js';
 import { renderMilestoneBox, wireMilestoneForms } from './milestones.js';
 
 export function renderPromptComparison(comparison, weekNumber) {
@@ -177,12 +178,7 @@ export function renderRoadmap(mountEl, weeks, { milestonesByWeek = {} } = {}) {
 
         <p class="week-card__objectives">${escapeHtml(w.objectives)}</p>
 
-        ${w.topics ? `
-          <div class="week-card__section">
-            <h3 class="week-card__section-title">Core Concepts</h3>
-            <ul class="week-card__topics">${w.topics.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>
-          </div>
-        ` : ''}
+        ${renderTopicStepper(w.topics)}
 
         ${renderPromptComparison(w.promptComparison, w.week)}
 
