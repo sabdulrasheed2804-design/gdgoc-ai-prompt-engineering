@@ -1,95 +1,50 @@
 import { escapeHtml } from './util.js';
 
-export function scoreQuiz(correctAnswers = [], selectedAnswers = []) {
-  return correctAnswers.reduce((count, correct, i) => {
-    return (selectedAnswers[i] !== undefined && selectedAnswers[i] === correct) ? count + 1 : count;
-  }, 0);
-}
+// One question per call -- lesson.js slots this in as a single step in the
+// week's continuous sequence, instead of all 5 questions (and their own
+// "Check answers" button) rendered open at once.
+export function renderQuizQuestion(item) {
+  const options = item.o
+    .map((opt, i) => `<button type="button" class="quiz__option" data-quiz-option data-opt="${i}">${escapeHtml(opt)}</button>`)
+    .join('');
 
-export function renderQuiz(quiz) {
-  if (!quiz || quiz.length === 0) return '';
-
-  const questionsHtml = quiz.map((item, qi) => {
-    const optionsHtml = item.o.map((opt, optIndex) => (
-      `<button type="button" class="quiz__option" data-quiz-option data-q="${qi}" data-opt="${optIndex}">${escapeHtml(opt)}</button>`
-    )).join('');
-
-    return `
-  <div class="quiz__question" data-quiz-question="${qi}" data-answer="${item.a}">
-    <p class="quiz__q">${qi + 1}. ${escapeHtml(item.q)}</p>
-    <div class="quiz__options">
-      ${optionsHtml}
+  return `
+    <div class="quiz-step" data-quiz-step data-answer="${item.a}">
+      <p class="quiz-step__q">${escapeHtml(item.q)}</p>
+      <div class="quiz-step__options">${options}</div>
+      <button type="button" class="btn btn--primary btn--sm" data-quiz-check>Check answer</button>
+      <p class="quiz-step__explain" data-quiz-explain hidden>${escapeHtml(item.e)}</p>
     </div>
-    <p class="quiz__explain" data-quiz-explain hidden>${escapeHtml(item.e)}</p>
-  </div>`;
-  }).join('');
-
-  return `<div class="quiz" data-quiz>
-  <h3 class="quiz__heading">Quick check</h3>${questionsHtml}
-  <button type="button" class="btn btn--primary" data-quiz-check>Check answers</button>
-  <p class="quiz__score" data-quiz-score hidden></p>
-</div>`;
+  `;
 }
 
-export function wireQuiz(mountEl) {
-  const quizBlocks = mountEl.querySelectorAll('[data-quiz]');
-  for (const block of quizBlocks) {
-    const selected = [];
-    const questionEls = block.querySelectorAll('[data-quiz-question]');
-    const checkBtn = block.querySelector('[data-quiz-check]');
-    const scoreEl = block.querySelector('[data-quiz-score]');
+function wireQuizStep(stepEl) {
+  const correct = Number(stepEl.dataset.answer);
+  let selected = null;
 
-    const optionButtons = block.querySelectorAll('[data-quiz-option]');
-    for (const optBtn of optionButtons) {
-      optBtn.addEventListener('click', () => {
-        const qIndex = Number(optBtn.dataset.q);
-        const optIndex = Number(optBtn.dataset.opt);
-        selected[qIndex] = optIndex;
+  stepEl.querySelectorAll('[data-quiz-option]').forEach((button) => {
+    button.addEventListener('click', () => {
+      selected = Number(button.dataset.opt);
+      stepEl.querySelectorAll('[data-quiz-option]').forEach((b) => b.classList.toggle('is-selected', b === button));
+    });
+  });
 
-        const qOptions = block.querySelectorAll(`[data-quiz-option][data-q="${qIndex}"]`);
-        for (const btn of qOptions) {
-          btn.classList.remove('is-selected');
-        }
-        optBtn.classList.add('is-selected');
-      });
-    }
+  stepEl.querySelector('[data-quiz-check]')?.addEventListener('click', () => {
+    // Clearing marks before reapplying makes a repeat click (after changing
+    // the selection) idempotent instead of stacking stale correct/incorrect
+    // classes from the previous check.
+    stepEl.querySelectorAll('[data-quiz-option]').forEach((button) => {
+      button.classList.remove('is-correct', 'is-incorrect');
+      const opt = Number(button.dataset.opt);
+      if (opt === correct) button.classList.add('is-correct');
+      else if (opt === selected) button.classList.add('is-incorrect');
+    });
 
-    if (checkBtn) {
-      checkBtn.addEventListener('click', () => {
-        const correctAnswers = [];
-        const selectedAnswers = [];
-
-        questionEls.forEach((qEl) => {
-          const qi = Number(qEl.dataset.quizQuestion);
-          const correct = Number(qEl.dataset.answer);
-          correctAnswers[qi] = correct;
-          selectedAnswers[qi] = selected[qi];
-
-          const options = qEl.querySelectorAll('[data-quiz-option]');
-          options.forEach((opt) => {
-            opt.classList.remove('is-correct', 'is-incorrect');
-            const optVal = Number(opt.dataset.opt);
-            if (optVal === correct) {
-              opt.classList.add('is-correct');
-            }
-            if (selected[qi] !== undefined && selected[qi] !== correct && optVal === selected[qi]) {
-              opt.classList.add('is-incorrect');
-            }
-          });
-
-          const explainEl = qEl.querySelector('[data-quiz-explain]');
-          if (explainEl) {
-            explainEl.hidden = false;
-          }
-        });
-
-        const score = scoreQuiz(correctAnswers, selectedAnswers);
-        if (scoreEl) {
-          scoreEl.textContent = `Score: ${score}/${questionEls.length}`;
-          scoreEl.hidden = false;
-        }
-      });
-    }
-  }
+    const explain = stepEl.querySelector('[data-quiz-explain]');
+    if (explain) explain.hidden = false;
+  });
 }
 
+export function wireQuizSteps(mountEl) {
+  mountEl.querySelectorAll('[data-quiz-step]').forEach(wireQuizStep);
+}

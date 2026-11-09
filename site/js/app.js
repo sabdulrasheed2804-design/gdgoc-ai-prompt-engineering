@@ -12,8 +12,7 @@ import { renderDashboard } from './dashboard.js';
 import { computeStats } from './stats.js';
 import { initRouter } from './router.js';
 import { renderPortfolioManager, wirePortfolioToggles, renderPublicPortfolio } from './portfolio.js';
-import { wireQuiz } from './quiz.js';
-import { wireTopicStepper } from './topics.js';
+import { wireLessonStepper } from './lesson.js';
 import { renderRegistrationForm, renderProfileView, wireProfileForm } from './profile.js';
 import { computeCohortStats, exportMembersToCsv, renderAdminDashboard, wireAdminDashboard } from './admin.js';
 import { computeBadges, renderBadgeGrid } from './badges.js';
@@ -126,8 +125,7 @@ if (startedOnPublicRoute) {
     const pacedWeeks = annotateWeekStatus(WEEKS, { weekStart: PROGRAM.weekStart, today });
     renderRoadmap(mountEl, pacedWeeks, { milestonesByWeek });
     wireLabForms(mountEl, currentMember.uid);
-    wireQuiz(mountEl);
-    wireTopicStepper(mountEl);
+    wireLessonStepper(mountEl);
     wireMilestoneForms(mountEl, {
       onSubmit: async (data) => {
         await submitMilestone(currentMember.uid, {

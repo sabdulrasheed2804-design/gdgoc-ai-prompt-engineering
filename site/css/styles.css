@@ -186,21 +186,6 @@ body {
   opacity: 0.85;
 }
 
-.week-card__preview {
-  margin-top: 1rem;
-}
-
-.week-card__preview > summary {
-  cursor: pointer;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-  padding: 0.5rem 0;
-}
-
-.week-card__preview[open] > summary {
-  color: var(--color-text);
-}
-
 /* Navigation Bar */
 .site-nav {
   position: sticky;
@@ -758,22 +743,11 @@ body {
   line-height: 1.6;
 }
 
-.week-card__section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.week-card__section-title {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-muted);
-}
-
-.topic-stepper {
+/* Lesson Stepper -- the whole week is one continuous sequence (topics,
+   pattern breakdown, quiz questions, the lab, the milestone, resources)
+   shown one step at a time through this single shared chrome, instead of
+   each section rendered fully open at once. */
+.lesson-stepper {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -781,7 +755,7 @@ body {
   margin: 12px 0;
 }
 
-.topic-stepper__head {
+.lesson-stepper__head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -789,39 +763,50 @@ body {
   margin-bottom: 8px;
 }
 
-.topic-stepper__counter {
+.lesson-stepper__kind {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-blue);
+}
+
+.lesson-stepper__counter {
   font-size: 0.78rem;
   color: var(--color-text-muted);
   white-space: nowrap;
 }
 
-.topic-stepper__title {
+.lesson-step__title {
   margin: 0 0 8px;
   font-size: 1rem;
   font-weight: 700;
 }
 
-.topic-stepper__explanation {
+.lesson-step__body {
   margin: 0;
   font-size: 0.92rem;
   line-height: 1.6;
   color: var(--color-text-secondary);
 }
 
-.topic-stepper__nav {
+.lesson-stepper__nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-top: 14px;
+  flex-wrap: wrap;
 }
 
-.topic-stepper__dots {
+.lesson-stepper__dots {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
+  max-width: 100%;
 }
 
-.topic-stepper__dot {
+.lesson-stepper__dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -829,16 +814,22 @@ body {
   padding: 0;
   background: var(--color-border);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
-.topic-stepper__dot.is-active {
+.lesson-stepper__dot.is-active {
   background: var(--color-blue);
 }
 
 .week-card__milestone-box {
+  /* Holds block-level children (.milestone-box__head, a <p>, the
+     submission summary, the form) -- this was flex-row from when it was
+     just an icon beside one line of text; stacking it horizontally once
+     those children were added is what made the whole capstone section
+     cramped, especially on narrow screens. */
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   padding: 14px 18px;
   background: var(--color-bg-secondary);
   border-left: 4px solid var(--color-yellow);
@@ -990,51 +981,21 @@ body {
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-/* Quiz Styles */
-.quiz {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.quiz__heading {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.quiz__heading::before {
-  content: "📝";
-}
-
-.quiz__question {
+/* Quiz Styles -- one question per lesson-stepper step */
+.quiz-step {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-bottom: 14px;
-  border-bottom: 1px dashed var(--color-border);
 }
 
-.quiz__question:last-of-type {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.quiz__q {
+.quiz-step__q {
   margin: 0;
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--color-text);
 }
 
-.quiz__options {
+.quiz-step__options {
   display: grid;
   grid-template-columns: 1fr;
   gap: 6px;
@@ -1079,7 +1040,7 @@ body {
   color: var(--color-red) !important;
 }
 
-.quiz__explain {
+.quiz-step__explain {
   margin: 4px 0 0;
   padding: 8px 12px;
   border-radius: 6px;
@@ -1090,61 +1051,7 @@ body {
   line-height: 1.5;
 }
 
-.quiz__score {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--color-blue);
-}
-
 /* Resources / Go Further */
-.week-card__resources {
-  border-top: 1px solid var(--color-border);
-  padding-top: 16px;
-}
-
-.week-card__resources h3 {
-  margin: 0 0 10px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-muted);
-}
-
-.week-card__resources ul {
-  margin: 0;
-  padding-left: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.week-card__resources a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--color-blue);
-  font-size: 0.9rem;
-  text-decoration: none;
-  transition: color 0.15s ease;
-}
-
-.week-card__resources a::after {
-  content: "↗";
-  font-size: 0.8rem;
-  transition: transform 0.15s ease;
-}
-
-.week-card__resources a:hover {
-  text-decoration: underline;
-}
-
-.week-card__resources a:hover::after {
-  transform: translate(2px, -2px);
-}
-
 /* Portfolio Styles */
 .portfolio-share-card {
   background: var(--color-surface);
