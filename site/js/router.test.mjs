@@ -22,6 +22,10 @@ test('resolveRoute matches a route by its segment before the first "/", for a ro
   assert.equal(resolveRoute({ dashboard() {}, roadmap() {} }, '#roadmap/3', 'dashboard'), 'roadmap');
 });
 
+test('resolveRoute matches a route by its segment before a "?", for a route with a hash query string', () => {
+  assert.equal(resolveRoute({ dashboard() {}, playground() {} }, '#playground?week=3', 'dashboard'), 'playground');
+});
+
 test('a slower route call is not allowed to overwrite a faster, later call (stale-render race)', async () => {
   const mountEl = { innerHTML: '' };
   let resolveSlow;

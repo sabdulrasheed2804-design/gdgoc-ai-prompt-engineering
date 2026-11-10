@@ -29,6 +29,16 @@ import { escapeHtml } from './util.js';
 const signInButton = document.getElementById('sign-in');
 const appEl = document.getElementById('app');
 const navEl = document.getElementById('main-nav');
+const navToggle = document.getElementById('nav-toggle');
+
+navToggle?.addEventListener('click', () => {
+  const isOpen = navEl.classList.toggle('is-open');
+  navToggle.setAttribute('aria-expanded', String(isOpen));
+});
+navEl.addEventListener('click', (e) => {
+  if (e.target.closest('a')) navEl.classList.remove('is-open');
+});
+window.addEventListener('hashchange', () => navEl.classList.remove('is-open'));
 
 const PUBLIC_PORTFOLIO_PREFIX = '#public/';
 const CERT_PREFIX = '#cert/';

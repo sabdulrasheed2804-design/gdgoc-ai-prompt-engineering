@@ -113,10 +113,10 @@ export function renderLeaderboard(mountEl, { rankedMembers = [], currentUserId =
 
               return `
                 <tr class="leaderboard-row ${isCurrent ? 'leaderboard-row--current' : ''}">
-                  <td class="leaderboard-rank">
+                  <td class="leaderboard-rank" data-label="Rank">
                     <span class="rank-pill rank-pill--${m.rank <= 3 ? m.rank : 'default'}">${rankDisplay}</span>
                   </td>
-                  <td>
+                  <td data-label="Member">
                     <div class="member-cell">
                       <div class="mini-avatar">${escapeHtml(m.name.charAt(0).toUpperCase())}</div>
                       <div>
@@ -126,14 +126,14 @@ export function renderLeaderboard(mountEl, { rankedMembers = [], currentUserId =
                       </div>
                     </div>
                   </td>
-                  <td>${escapeHtml(m.careerGoal)}</td>
-                  <td>
+                  <td data-label="Track">${escapeHtml(m.careerGoal)}</td>
+                  <td data-label="Labs">
                     <span class="labs-count">🧪 ${m.labsPassed}</span>
                   </td>
-                  <td>
+                  <td data-label="Streak">
                     <span class="streak-count">🔥 ${m.streak}d</span>
                   </td>
-                  <td class="xp-cell">
+                  <td class="xp-cell" data-label="Total XP">
                     <strong>${m.xp}</strong> <span class="xp-unit">XP</span>
                   </td>
                 </tr>

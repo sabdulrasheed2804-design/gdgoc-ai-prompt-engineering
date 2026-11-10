@@ -1,10 +1,11 @@
 export function resolveRoute(routes, hash, fallback) {
-  // Only the segment before the first "/" selects the route handler -- a
-  // hash like "#roadmap/3" still runs the "roadmap" handler, which reads
-  // the rest of window.location.hash itself for its own sub-navigation
-  // (e.g. which week to show). Lets one route own a whole area without
-  // the router needing to know about its internal structure.
-  const key = (hash || '').replace(/^#/, '').split('/')[0];
+  // Only the segment before the first "/" or "?" selects the route handler
+  // -- a hash like "#roadmap/3" or "#playground?week=3" still runs the
+  // "roadmap"/"playground" handler, which reads the rest of
+  // window.location.hash itself for its own sub-navigation or query params.
+  // Lets one route own a whole area without the router needing to know
+  // about its internal structure.
+  const key = (hash || '').replace(/^#/, '').split(/[/?]/)[0];
   return Object.hasOwn(routes, key) ? key : fallback;
 }
 

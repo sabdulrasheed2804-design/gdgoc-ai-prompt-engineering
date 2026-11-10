@@ -336,6 +336,47 @@ a.week-tile:hover {
 .site-nav a.is-active {
   color: var(--color-blue);
   background: var(--color-surface);
+}
+
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  margin: 2px auto;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.nav-toggle:hover {
+  background: var(--color-surface);
+}
+
+.nav-toggle__bar {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-text-muted);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.site-nav.is-open .nav-toggle__bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.site-nav.is-open .nav-toggle__bar:nth-child(2) {
+  opacity: 0;
+}
+
+.site-nav.is-open .nav-toggle__bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
   font-weight: 600;
   box-shadow: inset 0 -2px 0 var(--color-blue);
 }
@@ -1734,6 +1775,16 @@ a.week-tile:hover {
   padding-bottom: 8px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.admin-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-tab {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .admin-tab {
@@ -3145,6 +3196,17 @@ a.week-tile:hover {
 
 /* Media Queries */
 @media (max-width: 768px) {
+  /* The dot row is redundant with the "Step X of N" counter and progress
+     bar already shown above each panel, and with a week's worth of steps
+     (topics + quiz + comparison + lab...) it has too many dots to fit
+     next to Previous/Next at phone width without wrapping onto its own
+     line -- hiding it keeps Previous/Next on one row, flush to the edges. */
+  .lesson-stepper__dots {
+    display: none;
+  }
+  .lesson-stepper__nav {
+    flex-wrap: nowrap;
+  }
   .podium {
     grid-template-columns: 1fr;
     margin-top: 16px;
@@ -3173,6 +3235,62 @@ a.week-tile:hover {
   }
   .journal-form-card {
     position: static;
+  }
+  /* Six columns (Rank/Member/Track/Labs/Streak/XP) never fit a phone
+     width -- rather than leave this as a table a member has to discover
+     they can swipe sideways to read, turn each row into a stacked card:
+     thead is visually hidden and each td grows its own label from
+     data-label, the standard accessible responsive-table technique. */
+  .leaderboard-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .leaderboard-table,
+  .leaderboard-table tbody,
+  .leaderboard-table tr,
+  .leaderboard-table td {
+    display: block;
+    width: 100%;
+  }
+  .leaderboard-table tr {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .leaderboard-table td {
+    padding: 6px 0;
+    border-bottom: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .leaderboard-table td[data-label]::before {
+    content: attr(data-label);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+  .leaderboard-table td.leaderboard-rank,
+  .leaderboard-table td:first-child {
+    justify-content: flex-start;
+  }
+  .leaderboard-table td.leaderboard-rank::before {
+    margin-right: 10px;
+  }
+  /* The member cell is already self-explanatory (avatar + name) -- skip
+     the label-prefix treatment so it just reads as a normal block row. */
+  .leaderboard-table td[data-label="Member"] {
+    display: block;
+  }
+  .leaderboard-table td[data-label="Member"]::before {
+    content: none;
   }
 }
 
@@ -3205,22 +3323,35 @@ a.week-tile:hover {
     white-space: nowrap;
   }
   .site-nav {
-    padding: 6px 0;
+    padding: 2px 14px;
+  }
+  .nav-toggle {
+    display: flex;
   }
   .site-nav__inner {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding: 0 14px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .site-nav__inner::-webkit-scrollbar {
     display: none;
+    flex-direction: column;
+    gap: 2px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    margin: 0;
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+    padding: 6px 14px 12px;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    box-shadow: 0 16px 28px rgba(0, 0, 0, 0.28);
+  }
+  .site-nav.is-open .site-nav__inner {
+    display: flex;
   }
   .site-nav .nav-link,
   .site-nav a {
-    flex-shrink: 0;
-    white-space: nowrap;
+    width: 100%;
+    padding: 12px 14px;
+    white-space: normal;
   }
   #app {
     padding: 24px 16px 48px;
@@ -3759,6 +3890,13 @@ a.week-tile:hover {
 .terminal-card {
   display: flex;
   flex-direction: column;
+}
+/* An author rule setting `display` always beats the UA stylesheet's
+   [hidden] { display: none }, regardless of specificity -- without this,
+   toggling "Compare with Naive" leaves the single-output terminal visible
+   alongside the comparison view instead of actually hiding it. */
+.terminal-card[hidden] {
+  display: none;
 }
 .terminal-bar {
   display: flex;
