@@ -2480,37 +2480,55 @@ a.week-tile:hover {
   margin-bottom: 10px;
 }
 
-.podium-xp {
+.podium-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* Shared pill used for every labs/streak/XP figure, in the podium and in
+   the ranked list below it, so the same stat reads the same way everywhere
+   on the page instead of each spot inventing its own treatment. */
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.stat-chip--xp {
   font-family: var(--font-mono);
-  font-size: 1.15rem;
   font-weight: 700;
   color: #fbbc05;
+  background: rgba(251, 188, 5, 0.14);
 }
 
-.podium-labs {
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-}
-
-.leaderboard-table-wrap {
+.leaderboard-list {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  overflow-x: auto;
+  overflow: hidden;
 }
 
-.leaderboard-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-  text-align: left;
+.leaderboard-list__header,
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 56px minmax(170px, 1.8fr) minmax(100px, 1fr) 70px 90px 100px;
+  align-items: center;
+  gap: 12px;
 }
 
-.leaderboard-table th {
+.leaderboard-list__header {
   padding: 14px 18px;
-  font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-secondary);
@@ -2518,19 +2536,37 @@ a.week-tile:hover {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.leaderboard-table td {
+.leaderboard-row {
   padding: 14px 18px;
   border-bottom: 1px solid var(--color-border);
-  vertical-align: middle;
 }
 
-.leaderboard-table tbody tr:hover {
+.leaderboard-row:last-child {
+  border-bottom: none;
+}
+
+.leaderboard-row:hover {
   background: rgba(255, 255, 255, 0.02);
 }
 
 .leaderboard-row--current {
   background: rgba(66, 133, 244, 0.08) !important;
   font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--color-blue);
+}
+
+.leaderboard-row__track {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+/* On desktop this wrapper is invisible to layout -- its four children
+   (track + the three stat chips) become direct items of the row's own
+   grid, lining up under the Track/Labs/Streak/XP header columns. On
+   mobile it switches to a wrapping flex row instead (see media query),
+   so the same markup serves both layouts with no duplication. */
+.leaderboard-row__meta {
+  display: contents;
 }
 
 .rank-pill {
@@ -2605,12 +2641,6 @@ a.week-tile:hover {
   font-size: 0.88rem;
 }
 
-.xp-cell {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  color: #fbbc05;
-  font-size: 0.95rem;
-}
 
 .current-user-banner {
   display: flex;
@@ -3237,60 +3267,32 @@ a.week-tile:hover {
     position: static;
   }
   /* Six columns (Rank/Member/Track/Labs/Streak/XP) never fit a phone
-     width -- rather than leave this as a table a member has to discover
-     they can swipe sideways to read, turn each row into a stacked card:
-     thead is visually hidden and each td grows its own label from
-     data-label, the standard accessible responsive-table technique. */
-  .leaderboard-table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
+     width. The header row (column labels) is redundant once each stat is
+     its own labeled chip, so it just hides; each row reflows from one
+     six-column grid line into two lines -- name up top, rank beside it,
+     then every other field as a wrapping row of chips underneath. */
+  .leaderboard-list__header {
+    display: none;
   }
-  .leaderboard-table,
-  .leaderboard-table tbody,
-  .leaderboard-table tr,
-  .leaderboard-table td {
-    display: block;
-    width: 100%;
-  }
-  .leaderboard-table tr {
+  .leaderboard-row {
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "rank member" "rank meta";
+    row-gap: 6px;
     padding: 14px 16px;
-    border-bottom: 1px solid var(--color-border);
   }
-  .leaderboard-table td {
-    padding: 6px 0;
-    border-bottom: none;
+  .leaderboard-row__rank {
+    grid-area: rank;
+    align-self: start;
+  }
+  .leaderboard-row__member {
+    grid-area: member;
+  }
+  .leaderboard-row__meta {
+    grid-area: meta;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .leaderboard-table td[data-label]::before {
-    content: attr(data-label);
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-text-muted);
-    flex-shrink: 0;
-  }
-  .leaderboard-table td.leaderboard-rank,
-  .leaderboard-table td:first-child {
-    justify-content: flex-start;
-  }
-  .leaderboard-table td.leaderboard-rank::before {
-    margin-right: 10px;
-  }
-  /* The member cell is already self-explanatory (avatar + name) -- skip
-     the label-prefix treatment so it just reads as a normal block row. */
-  .leaderboard-table td[data-label="Member"] {
-    display: block;
-  }
-  .leaderboard-table td[data-label="Member"]::before {
-    content: none;
+    gap: 6px 8px;
   }
 }
 
