@@ -370,7 +370,10 @@ export function renderPlayground(mountEl, { initialWeek = 1 } = {}) {
                   <span>✅ Engineered Prompt Response</span>
                 </div>
                 <div class="compare-pane__prompt-snippet">
-                  <em>Prompt:</em> <code>[System Contract Active]</code>
+                  <em>System prompt:</em> <code id="compare-good-system">${escapeHtml(selectedPreset.systemPrompt)}</code>
+                </div>
+                <div class="compare-pane__prompt-snippet">
+                  <em>User message:</em> <code id="compare-good-prompt">${escapeHtml(selectedPreset.userInput)}</code>
                 </div>
                 <pre class="font-mono" id="compare-good-output"><code>${escapeHtml(selectedPreset.engineeredOutput)}</code></pre>
                 <div class="compare-pane__verdict">
@@ -407,6 +410,8 @@ export function wirePlayground(mountEl) {
   const copyOutputBtn = mountEl.querySelector('#copy-output-btn');
   const compareNaivePrompt = mountEl.querySelector('#compare-naive-prompt');
   const compareNaiveOutput = mountEl.querySelector('#compare-naive-output code');
+  const compareGoodSystem = mountEl.querySelector('#compare-good-system');
+  const compareGoodPrompt = mountEl.querySelector('#compare-good-prompt');
   const compareGoodOutput = mountEl.querySelector('#compare-good-output code');
 
   function updateTokenCounts() {
@@ -444,6 +449,8 @@ export function wirePlayground(mountEl) {
 
     if (compareNaivePrompt) compareNaivePrompt.textContent = preset.naivePrompt;
     if (compareNaiveOutput) compareNaiveOutput.textContent = preset.naiveOutput;
+    if (compareGoodSystem) compareGoodSystem.textContent = preset.systemPrompt;
+    if (compareGoodPrompt) compareGoodPrompt.textContent = preset.userInput;
     if (compareGoodOutput) compareGoodOutput.textContent = preset.engineeredOutput;
 
     if (terminalMeta) {

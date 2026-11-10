@@ -37,6 +37,7 @@ const RESOURCE_TYPE_LABELS = {
 };
 
 function renderComparison(comparison, weekNumber) {
+  const question = comparison.userQuestion || comparison.badPrompt;
   return `
     <div class="prompt-comparison">
       <div class="prompt-comparison__header">
@@ -46,16 +47,22 @@ function renderComparison(comparison, weekNumber) {
         </a>
       </div>
 
+      <div class="prompt-comparison__question">
+        <span class="prompt-comparison__question-label">🧑 The question being asked (same one, both sides below):</span>
+        <p class="prompt-comparison__question-text">"${escapeHtml(question)}"</p>
+      </div>
+
       <div class="prompt-comparison__grid">
         <div class="comparison-column comparison-column--bad">
           <div class="comparison-column__header">
             <span class="comparison-column__icon">❌</span>
-            <span class="comparison-column__label">Naive / Ambiguous Prompt</span>
+            <span class="comparison-column__label">Without a system prompt</span>
           </div>
           <div class="comparison-column__prompt">
+            <div class="comparison-column__prompt-label">What gets sent:</div>
             <pre><code>${escapeHtml(comparison.badPrompt)}</code></pre>
           </div>
-          <div class="comparison-column__output-label">Unreliable / Verbose Output:</div>
+          <div class="comparison-column__output-label">Unreliable / verbose output:</div>
           <div class="comparison-column__output">
             <pre><code>${escapeHtml(comparison.badOutput)}</code></pre>
           </div>
@@ -64,12 +71,15 @@ function renderComparison(comparison, weekNumber) {
         <div class="comparison-column comparison-column--good">
           <div class="comparison-column__header">
             <span class="comparison-column__icon">✅</span>
-            <span class="comparison-column__label">Engineered System Prompt</span>
+            <span class="comparison-column__label">With a system prompt in place</span>
           </div>
           <div class="comparison-column__prompt">
+            <div class="comparison-column__prompt-label">System prompt:</div>
             <pre><code>${escapeHtml(comparison.goodPrompt)}</code></pre>
+            <div class="comparison-column__prompt-label">User message:</div>
+            <pre><code>${escapeHtml(question)}</code></pre>
           </div>
-          <div class="comparison-column__output-label">Deterministic & Structured Output:</div>
+          <div class="comparison-column__output-label">Deterministic & structured output:</div>
           <div class="comparison-column__output">
             <pre><code>${escapeHtml(comparison.goodOutput)}</code></pre>
           </div>
