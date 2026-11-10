@@ -31,6 +31,7 @@ test('every week with a lab has a structured prompt comparison breakdown', () =>
   for (const w of WEEKS.filter((w) => w.lab)) {
     assert.ok(w.promptComparison, `week ${w.week} promptComparison exists`);
     assert.ok(w.promptComparison.technique.length > 0);
+    assert.ok(w.promptComparison.userQuestion.length > 0, `week ${w.week} promptComparison.userQuestion exists`);
     assert.ok(w.promptComparison.badPrompt.length > 0);
     assert.ok(w.promptComparison.badOutput.length > 0);
     assert.ok(w.promptComparison.goodPrompt.length > 0);

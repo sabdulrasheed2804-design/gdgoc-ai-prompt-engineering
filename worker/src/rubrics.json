@@ -2,9 +2,9 @@
   "w1-json-lab": {
     "schema": { "answer": "string", "confidence": ["low", "medium", "high"] },
     "testCases": [
-      { "question": "What is the capital of France?" },
-      { "question": "How many continents are there?" },
-      { "question": "What year did the first moon landing happen?" }
+      { "question": "What is the largest planet in our solar system?" },
+      { "question": "Who wrote the play Romeo and Juliet?" },
+      { "question": "What is the freezing point of water in Celsius?" }
     ]
   },
   "w2-fewshot-lab": {

@@ -12,7 +12,7 @@ const WEEK = {
     { title: 'Topic B', explanation: 'Explanation B' },
   ],
   promptComparison: {
-    technique: 'Tech', badPrompt: 'bad', badOutput: 'bad out', goodPrompt: 'good', goodOutput: 'good out', whyItWorks: 'because',
+    technique: 'Tech', userQuestion: 'What is X?', badPrompt: 'bad', badOutput: 'bad out', goodPrompt: 'good', goodOutput: 'good out', whyItWorks: 'because',
   },
   quiz: [
     { q: 'Q1', o: ['a', 'b', 'c', 'd'], a: 0, e: 'e1' },
@@ -82,6 +82,7 @@ test('the comparison step renders the full technique breakdown with a playground
     week: 3, title: 'W', milestone: 'm',
     promptComparison: {
       technique: 'JSON Contract',
+      userQuestion: 'What is the capital of France?',
       badPrompt: 'Tell me the answer',
       badOutput: 'Sure thing! The answer is Paris',
       goodPrompt: 'Output ONLY JSON',
@@ -90,6 +91,7 @@ test('the comparison step renders the full technique breakdown with a playground
     },
   });
   assert.match(html, /JSON Contract/);
+  assert.match(html, /What is the capital of France\?/);
   assert.match(html, /Tell me the answer/);
   assert.match(html, /Output ONLY JSON/);
   assert.match(html, /Negative constraints prevent conversational filler/);
