@@ -61,8 +61,10 @@ export function renderLeaderboard(mountEl, { rankedMembers = [], currentUserId =
               <div class="podium-avatar">${escapeHtml(top3[1].name.charAt(0).toUpperCase())}</div>
               <span class="podium-name">${escapeHtml(top3[1].name)}</span>
               <span class="podium-track">${escapeHtml(top3[1].careerGoal)}</span>
-              <span class="podium-xp">${top3[1].xp} XP</span>
-              <span class="podium-labs">🧪 ${top3[1].labsPassed} labs</span>
+              <div class="podium-stats">
+                <span class="stat-chip stat-chip--xp">${top3[1].xp} XP</span>
+                <span class="stat-chip stat-chip--labs">🧪 ${top3[1].labsPassed}</span>
+              </div>
             </div>
           ` : ''}
 
@@ -73,8 +75,10 @@ export function renderLeaderboard(mountEl, { rankedMembers = [], currentUserId =
               <div class="podium-avatar podium-avatar--gold">${escapeHtml(top3[0].name.charAt(0).toUpperCase())}</div>
               <span class="podium-name">${escapeHtml(top3[0].name)}</span>
               <span class="podium-track">${escapeHtml(top3[0].careerGoal)}</span>
-              <span class="podium-xp">${top3[0].xp} XP</span>
-              <span class="podium-labs">🧪 ${top3[0].labsPassed} labs</span>
+              <div class="podium-stats">
+                <span class="stat-chip stat-chip--xp">${top3[0].xp} XP</span>
+                <span class="stat-chip stat-chip--labs">🧪 ${top3[0].labsPassed}</span>
+              </div>
             </div>
           ` : ''}
 
@@ -84,63 +88,55 @@ export function renderLeaderboard(mountEl, { rankedMembers = [], currentUserId =
               <div class="podium-avatar">${escapeHtml(top3[2].name.charAt(0).toUpperCase())}</div>
               <span class="podium-name">${escapeHtml(top3[2].name)}</span>
               <span class="podium-track">${escapeHtml(top3[2].careerGoal)}</span>
-              <span class="podium-xp">${top3[2].xp} XP</span>
-              <span class="podium-labs">🧪 ${top3[2].labsPassed} labs</span>
+              <div class="podium-stats">
+                <span class="stat-chip stat-chip--xp">${top3[2].xp} XP</span>
+                <span class="stat-chip stat-chip--labs">🧪 ${top3[2].labsPassed}</span>
+              </div>
             </div>
           ` : ''}
         </div>
       ` : ''}
 
-      <div class="leaderboard-table-wrap">
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th style="width: 70px;">Rank</th>
-              <th>Member</th>
-              <th>Track</th>
-              <th>Labs</th>
-              <th>Streak</th>
-              <th>Total XP</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rest.map((m) => {
-              const isCurrent = m.uid === currentUserId;
-              let rankDisplay = `#${m.rank}`;
-              if (m.rank === 1) rankDisplay = '🥇 1';
-              else if (m.rank === 2) rankDisplay = '🥈 2';
-              else if (m.rank === 3) rankDisplay = '🥉 3';
+      <div class="leaderboard-list" role="table" aria-label="Full cohort ranking">
+        <div class="leaderboard-list__header" role="row">
+          <span role="columnheader">Rank</span>
+          <span role="columnheader">Member</span>
+          <span role="columnheader">Track</span>
+          <span role="columnheader">Labs</span>
+          <span role="columnheader">Streak</span>
+          <span role="columnheader">Total XP</span>
+        </div>
+        ${rest.map((m) => {
+          const isCurrent = m.uid === currentUserId;
+          let rankDisplay = `#${m.rank}`;
+          if (m.rank === 1) rankDisplay = '🥇 1';
+          else if (m.rank === 2) rankDisplay = '🥈 2';
+          else if (m.rank === 3) rankDisplay = '🥉 3';
 
-              return `
-                <tr class="leaderboard-row ${isCurrent ? 'leaderboard-row--current' : ''}">
-                  <td class="leaderboard-rank">
-                    <span class="rank-pill rank-pill--${m.rank <= 3 ? m.rank : 'default'}">${rankDisplay}</span>
-                  </td>
-                  <td>
-                    <div class="member-cell">
-                      <div class="mini-avatar">${escapeHtml(m.name.charAt(0).toUpperCase())}</div>
-                      <div>
-                        <strong>${escapeHtml(m.name)}</strong>
-                        ${isCurrent ? '<span class="badge badge--glow badge--you">YOU</span>' : ''}
-                        <div class="table-sub">${escapeHtml(m.department || '')} ${m.level ? '· ' + escapeHtml(m.level) : ''}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>${escapeHtml(m.careerGoal)}</td>
-                  <td>
-                    <span class="labs-count">🧪 ${m.labsPassed}</span>
-                  </td>
-                  <td>
-                    <span class="streak-count">🔥 ${m.streak}d</span>
-                  </td>
-                  <td class="xp-cell">
-                    <strong>${m.xp}</strong> <span class="xp-unit">XP</span>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
+          return `
+            <div class="leaderboard-row ${isCurrent ? 'leaderboard-row--current' : ''}" role="row">
+              <div class="leaderboard-row__rank" role="cell">
+                <span class="rank-pill rank-pill--${m.rank <= 3 ? m.rank : 'default'}">${rankDisplay}</span>
+              </div>
+              <div class="leaderboard-row__member" role="cell">
+                <div class="member-cell">
+                  <div class="mini-avatar">${escapeHtml(m.name.charAt(0).toUpperCase())}</div>
+                  <div>
+                    <strong>${escapeHtml(m.name)}</strong>
+                    ${isCurrent ? '<span class="badge badge--glow badge--you">YOU</span>' : ''}
+                    <div class="table-sub">${escapeHtml(m.department || '')} ${m.level ? '· ' + escapeHtml(m.level) : ''}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="leaderboard-row__meta">
+                <span class="leaderboard-row__track" role="cell">${escapeHtml(m.careerGoal)}</span>
+                <span class="stat-chip stat-chip--labs" role="cell">🧪 ${m.labsPassed}</span>
+                <span class="stat-chip stat-chip--streak" role="cell">🔥 ${m.streak}d</span>
+                <span class="stat-chip stat-chip--xp" role="cell">${m.xp} XP</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
       </div>
     </div>
   `;
