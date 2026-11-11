@@ -3305,11 +3305,27 @@ a.week-tile:hover {
     gap: 10px;
     min-width: 0;
   }
+  /* Flex items default to min-width: auto, which blocks shrinking below
+     their content's natural width -- without resetting it down this
+     chain (the untitled wrapper div, then the title row), the ellipsis
+     below never actually gets a chance to kick in and the title just
+     wraps onto a second line instead of truncating to one. */
+  .site-header__brand > div,
+  .site-header__title-row {
+    min-width: 0;
+  }
   .site-header__tagline {
     display: none;
   }
+  .site-header__title-row .badge {
+    flex-shrink: 0;
+  }
   .site-header h1 {
     font-size: 0.98rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   /* Signed in, app.js replaces this button's children with a bare text
      node (the member's name) -- no span to target, so the truncation has
@@ -3356,13 +3372,33 @@ a.week-tile:hover {
     white-space: normal;
   }
   #app {
-    padding: 24px 16px 48px;
+    padding: 20px 14px 48px;
   }
   .dashboard-hero {
     padding: 20px;
   }
+  /* A week's lesson content was sitting in two nested decorative boxes
+     (.week-card inside #app, .lesson-stepper inside that) before even
+     reaching the actual content -- each with its own background, border
+     and padding, which only left a narrow column for the thing members
+     actually came to read: the prompt examples. Strip both wrappers down
+     to plain flow content on phones, so lessons use the full width #app
+     already gives them. The smaller, meaningful boxes further in (the
+     naive-vs-engineered comparison, the lab editor, the milestone box)
+     keep their own borders -- those separate distinct content, unlike
+     these two outer wrappers which existed only to look like a card. */
   .week-card {
-    padding: 20px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .lesson-stepper {
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
   }
   .registration-card {
     padding: 20px;
