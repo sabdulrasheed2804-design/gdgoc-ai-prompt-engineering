@@ -1538,7 +1538,8 @@ a.week-tile:hover {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   font-family: var(--font-sans);
   font-size: 0.9rem;
   padding: 10px 14px;
@@ -1549,8 +1550,14 @@ a.week-tile:hover {
   transition: all 0.15s ease;
 }
 
+.form-group textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
 .form-group input:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: var(--color-blue);
   box-shadow: 0 0 0 3px var(--color-blue-glow);
@@ -2256,13 +2263,19 @@ a.week-tile:hover {
 
 .badge-item {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 10px;
   padding: 14px 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.02);
   transition: all var(--transition-fast);
+}
+
+.badge-item__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .badge-item--unlocked {
@@ -2309,9 +2322,6 @@ a.week-tile:hover {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .badge-item__desc {
@@ -2336,6 +2346,7 @@ a.week-tile:hover {
   border: 1px solid rgba(52, 168, 83, 0.3);
   align-self: flex-start;
   flex-shrink: 0;
+  margin-left: 58px;
 }
 
 .badge-item__status--locked {

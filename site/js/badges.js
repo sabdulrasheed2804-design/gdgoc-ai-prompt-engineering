@@ -125,10 +125,12 @@ export function renderBadgeGrid(badges = []) {
       <div class="badges-grid">
         ${badges.map((b) => `
           <div class="badge-item ${b.unlocked ? 'badge-item--unlocked' : 'badge-item--locked'}" title="${escapeHtml(b.description)}">
-            <div class="badge-item__icon">${b.icon}</div>
-            <div class="badge-item__info">
-              <span class="badge-item__name">${escapeHtml(b.name)}</span>
-              <span class="badge-item__desc">${escapeHtml(b.description)}</span>
+            <div class="badge-item__row">
+              <div class="badge-item__icon">${b.icon}</div>
+              <div class="badge-item__info">
+                <span class="badge-item__name">${escapeHtml(b.name)}</span>
+                <span class="badge-item__desc">${escapeHtml(b.description)}</span>
+              </div>
             </div>
             ${b.unlocked ? '<span class="badge-item__status">Unlocked</span>' : '<span class="badge-item__status badge-item__status--locked">Locked</span>'}
           </div>
