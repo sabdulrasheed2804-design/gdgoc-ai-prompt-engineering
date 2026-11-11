@@ -108,10 +108,14 @@ export function renderLeaderboard(mountEl, { rankedMembers = [], currentUserId =
         </div>
         ${rest.map((m) => {
           const isCurrent = m.uid === currentUserId;
+          // Medal + ordinal ("🥇 1") doesn't fit on one line inside the
+          // small round rank-pill below, so it wraps and the pill ends up
+          // looking top-aligned instead of centered. The medal alone
+          // already identifies the rank without the redundant number.
           let rankDisplay = `#${m.rank}`;
-          if (m.rank === 1) rankDisplay = '🥇 1';
-          else if (m.rank === 2) rankDisplay = '🥈 2';
-          else if (m.rank === 3) rankDisplay = '🥉 3';
+          if (m.rank === 1) rankDisplay = '🥇';
+          else if (m.rank === 2) rankDisplay = '🥈';
+          else if (m.rank === 3) rankDisplay = '🥉';
 
           return `
             <div class="leaderboard-row ${isCurrent ? 'leaderboard-row--current' : ''}" role="row">

@@ -2573,14 +2573,17 @@ a.week-tile:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 0.85rem;
   color: var(--color-text-secondary);
   background: rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .rank-pill--1 {
