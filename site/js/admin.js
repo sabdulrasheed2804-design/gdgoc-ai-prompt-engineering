@@ -263,7 +263,7 @@ export function renderAdminDashboard(mountEl, { stats, members = [], milestones 
                   <strong>Repository:</strong>
                   ${isHttpUrl(m.repoUrl)
                     ? `<a href="${escapeHtml(m.repoUrl)}" target="_blank" rel="noopener">${escapeHtml(m.repoUrl)}</a>`
-                    : escapeHtml(m.repoUrl || '')}
+                    : escapeHtml(m.repoUrl || 'Not provided')}
                 </div>
                 ${m.demoUrl ? `
                   <div class="review-meta-row">

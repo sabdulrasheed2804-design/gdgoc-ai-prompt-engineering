@@ -57,6 +57,7 @@ export function validateJournalEntry(data) {
 
 export function renderJournalView(mountEl, { entries = [], activityData = [] }) {
   const totalEntries = entries.length;
+  const activeDayCount = activityData.filter((d) => d.count > 0).length;
 
   mountEl.innerHTML = `
     <div class="journal-container">
@@ -74,7 +75,7 @@ export function renderJournalView(mountEl, { entries = [], activityData = [] }) 
       <div class="activity-section">
         <div class="activity-section__head">
           <h3>Consistency & Activity Heatmap</h3>
-          <span class="badge badge--glow">${activityData.filter((d) => d.count > 0).length} Active Days</span>
+          <span class="badge badge--glow">${activeDayCount} Active Day${activeDayCount === 1 ? '' : 's'}</span>
         </div>
         <div class="activity-heatmap" data-activity-heatmap>
           <div class="heatmap-grid">
