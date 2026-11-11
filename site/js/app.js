@@ -25,6 +25,7 @@ import { WEEKS } from './data.js';
 import { PROGRAM } from './config.js';
 import { annotateWeekStatus } from './pacing.js';
 import { escapeHtml } from './util.js';
+import { initInstallPrompt } from './install-prompt.js';
 
 const signInButton = document.getElementById('sign-in');
 const appEl = document.getElementById('app');
@@ -39,6 +40,17 @@ navEl.addEventListener('click', (e) => {
   if (e.target.closest('a')) navEl.classList.remove('is-open');
 });
 window.addEventListener('hashchange', () => navEl.classList.remove('is-open'));
+
+const installBannerMount = document.getElementById('install-banner-mount');
+if (installBannerMount) {
+  initInstallPrompt(installBannerMount, { appName: 'AI Prompt Eng' });
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch((err) => {
+    console.warn('service worker registration failed', err);
+  });
+}
 
 const PUBLIC_PORTFOLIO_PREFIX = '#public/';
 const CERT_PREFIX = '#cert/';
