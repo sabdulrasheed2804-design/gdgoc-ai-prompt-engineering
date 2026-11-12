@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { gemini } from '../src/gemini.js';
 import { handleGradeLab } from '../src/index.js';
+import { mockCorrectAnswers } from './helpers.js';
 
 const FAKE_ENV = { GEMINI_API_KEY: 'fake', GEMINI_MODEL: 'fake-model' };
 
@@ -52,10 +53,7 @@ test('does not write a labRuns record when Gemini fails', async () => {
 
 test('accumulates tokensToday across calls instead of overwriting it', async () => {
   const firestore = makeFakeFirestore();
-  test.mock.method(gemini, 'callGemini', async () => ({
-    text: '{"answer":"x","confidence":"low"}',
-    tokensUsed: 100,
-  }));
+  mockCorrectAnswers('w1-json-lab', 100);
 
   await handleGradeLab({ uid: 'u3', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
   await handleGradeLab({ uid: 'u3', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
@@ -66,7 +64,7 @@ test('accumulates tokensToday across calls instead of overwriting it', async () 
 
 test('writes a portfolio entry on a first passing submission', async () => {
   const firestore = makeFakeFirestore();
-  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+  mockCorrectAnswers('w1-json-lab');
 
   await handleGradeLab({ uid: 'u4', week: 1, labId: 'w1-json-lab', promptText: 'first try' }, FAKE_ENV, firestore);
 
@@ -78,7 +76,7 @@ test('writes a portfolio entry on a first passing submission', async () => {
 
 test('keeps the first passing entry when a later submission also passes (grading is pass/fail, so ties always score 1)', async () => {
   const firestore = makeFakeFirestore();
-  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+  mockCorrectAnswers('w1-json-lab');
 
   await handleGradeLab({ uid: 'u5', week: 1, labId: 'w1-json-lab', promptText: 'first winning prompt' }, FAKE_ENV, firestore);
   await handleGradeLab({ uid: 'u5', week: 1, labId: 'w1-json-lab', promptText: 'second winning prompt' }, FAKE_ENV, firestore);
@@ -89,7 +87,7 @@ test('keeps the first passing entry when a later submission also passes (grading
 
 test('preserves an existing published flag across a later passing resubmission', async () => {
   const firestore = makeFakeFirestore();
-  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+  mockCorrectAnswers('w1-json-lab');
 
   await handleGradeLab({ uid: 'u7', week: 1, labId: 'w1-json-lab', promptText: 'first try' }, FAKE_ENV, firestore);
   firestore.store.docs['portfolio/u7/entries/1'].published = true; // the member published it
@@ -110,7 +108,7 @@ test('does not write a portfolio entry for a failing submission', async () => {
 
 test('derives week from labId on the server, ignoring a client-supplied week', async () => {
   const firestore = makeFakeFirestore();
-  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+  mockCorrectAnswers('w1-json-lab');
 
   await handleGradeLab({ uid: 'u8', week: 7, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
 
@@ -121,7 +119,7 @@ test('derives week from labId on the server, ignoring a client-supplied week', a
 
 test('writes leaderboard xp/labsPassed/streak on a first passing submission', async () => {
   const firestore = makeFakeFirestore();
-  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+  mockCorrectAnswers('w1-json-lab');
 
   await handleGradeLab({ uid: 'u10', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
 
@@ -147,7 +145,7 @@ test('updates leaderboard streak/lastActiveDate on a failing submission too, wit
 
 test('does not double-count xp/labsPassed on a second pass for the same week', async () => {
   const firestore = makeFakeFirestore();
-  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+  mockCorrectAnswers('w1-json-lab');
 
   await handleGradeLab({ uid: 'u12', week: 1, labId: 'w1-json-lab', promptText: 'first' }, FAKE_ENV, firestore);
   await handleGradeLab({ uid: 'u12', week: 1, labId: 'w1-json-lab', promptText: 'second' }, FAKE_ENV, firestore);
@@ -175,7 +173,7 @@ test('increments streak when the previous active day was yesterday, resets after
 test('preserves self-written name/level/department fields already on the leaderboard doc', async () => {
   const firestore = makeFakeFirestore();
   firestore.store.docs['leaderboard/u15'] = { name: 'Ada', level: '300', department: 'CS' };
-  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+  mockCorrectAnswers('w1-json-lab');
 
   await handleGradeLab({ uid: 'u15', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
 
@@ -193,7 +191,7 @@ test('still returns a result even if the leaderboard write fails', async () => {
     if (path.startsWith('leaderboard/')) throw new Error('simulated Firestore failure');
     return originalTransactionalUpdate(path, computeNext);
   };
-  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+  mockCorrectAnswers('w1-json-lab');
 
   const result = await handleGradeLab({ uid: 'u16', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
 
@@ -208,7 +206,7 @@ test('still charges tokens and returns a result even if the portfolio write fail
     if (path.startsWith('portfolio/')) throw new Error('simulated Firestore failure');
     return originalTransactionalUpdate(path, computeNext);
   };
-  test.mock.method(gemini, 'callGemini', async () => ({ text: '{"answer":"x","confidence":"low"}', tokensUsed: 10 }));
+  mockCorrectAnswers('w1-json-lab');
 
   const result = await handleGradeLab({ uid: 'u9', week: 1, labId: 'w1-json-lab', promptText: 'x' }, FAKE_ENV, firestore);
 
