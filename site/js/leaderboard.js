@@ -27,6 +27,50 @@ export function rankMembers(members = [], statsMap = {}) {
   }));
 }
 
+const MEDALS = { 1: '🥇', 2: '🥈', 3: '🥉' };
+const ORDINALS = { 1: '1st', 2: '2nd', 3: '3rd' };
+
+function describeMember(m) {
+  const parts = [`🧪 ${m.labsPassed} ${m.labsPassed === 1 ? 'lab' : 'labs'}`];
+  if (m.streak > 0) parts.push(`🔥 ${m.streak}-day streak`);
+  if (m.careerGoal) parts.push(escapeHtml(m.careerGoal));
+  return parts.join(' · ');
+}
+
+function renderPodiumStep(m, currentUserId) {
+  const current = m.uid === currentUserId ? 'podium-step--current' : '';
+  return `
+    <div class="podium-step podium-step--${m.rank} ${current}" aria-label="${ORDINALS[m.rank]} place: ${escapeHtml(m.name)}, ${m.xp} XP">
+      <div class="podium-avatar">
+        ${escapeHtml(m.name.charAt(0).toUpperCase())}
+        <span class="podium-medal" aria-hidden="true">${MEDALS[m.rank]}</span>
+      </div>
+      <span class="podium-name">${escapeHtml(m.name)}</span>
+      <span class="podium-xp">${m.xp} XP</span>
+      <div class="podium-pedestal" aria-hidden="true">${m.rank}</div>
+    </div>
+  `;
+}
+
+function renderRow(m, currentUserId) {
+  const isCurrent = m.uid === currentUserId;
+  const medal = MEDALS[m.rank];
+  return `
+    <div class="leaderboard-row ${isCurrent ? 'leaderboard-row--current' : ''}" role="listitem">
+      <span class="leaderboard-row__rank ${medal ? 'leaderboard-row__rank--medal' : ''}" aria-label="Rank ${m.rank}">${medal || m.rank}</span>
+      <div class="leaderboard-row__avatar" aria-hidden="true">${escapeHtml(m.name.charAt(0).toUpperCase())}</div>
+      <div class="leaderboard-row__info">
+        <div class="leaderboard-row__name">
+          <span>${escapeHtml(m.name)}</span>
+          ${isCurrent ? '<span class="badge badge--glow badge--you">You</span>' : ''}
+        </div>
+        <div class="leaderboard-row__meta">${describeMember(m)}</div>
+      </div>
+      <div class="leaderboard-row__xp">${m.xp}<small>XP</small></div>
+    </div>
+  `;
+}
+
 export function renderLeaderboard(mountEl, { rankedMembers = [], currentUserId = null }) {
   if (rankedMembers.length === 0) {
     mountEl.innerHTML = `
@@ -41,7 +85,9 @@ export function renderLeaderboard(mountEl, { rankedMembers = [], currentUserId =
   }
 
   const top3 = rankedMembers.slice(0, 3);
-  const rest = rankedMembers;
+  // Source order 2nd, 1st, 3rd puts the winner in the middle column -- the
+  // classic podium silhouette.
+  const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
 
   mountEl.innerHTML = `
     <div class="leaderboard-container">
@@ -55,94 +101,17 @@ export function renderLeaderboard(mountEl, { rankedMembers = [], currentUserId =
 
       ${top3.length >= 2 ? `
         <div class="podium">
-          ${top3[1] ? `
-            <div class="podium-step podium-step--2 ${top3[1].uid === currentUserId ? 'podium-step--current' : ''}">
-              <div class="podium-medal">🥈 2nd</div>
-              <div class="podium-avatar">${escapeHtml(top3[1].name.charAt(0).toUpperCase())}</div>
-              <span class="podium-name">${escapeHtml(top3[1].name)}</span>
-              <span class="podium-track">${escapeHtml(top3[1].careerGoal)}</span>
-              <div class="podium-stats">
-                <span class="stat-chip stat-chip--xp">${top3[1].xp} XP</span>
-                <span class="stat-chip stat-chip--labs">🧪 ${top3[1].labsPassed}</span>
-              </div>
-            </div>
-          ` : ''}
-
-          ${top3[0] ? `
-            <div class="podium-step podium-step--1 ${top3[0].uid === currentUserId ? 'podium-step--current' : ''}">
-              <div class="podium-crown">👑</div>
-              <div class="podium-medal">🥇 1st</div>
-              <div class="podium-avatar podium-avatar--gold">${escapeHtml(top3[0].name.charAt(0).toUpperCase())}</div>
-              <span class="podium-name">${escapeHtml(top3[0].name)}</span>
-              <span class="podium-track">${escapeHtml(top3[0].careerGoal)}</span>
-              <div class="podium-stats">
-                <span class="stat-chip stat-chip--xp">${top3[0].xp} XP</span>
-                <span class="stat-chip stat-chip--labs">🧪 ${top3[0].labsPassed}</span>
-              </div>
-            </div>
-          ` : ''}
-
-          ${top3[2] ? `
-            <div class="podium-step podium-step--3 ${top3[2].uid === currentUserId ? 'podium-step--current' : ''}">
-              <div class="podium-medal">🥉 3rd</div>
-              <div class="podium-avatar">${escapeHtml(top3[2].name.charAt(0).toUpperCase())}</div>
-              <span class="podium-name">${escapeHtml(top3[2].name)}</span>
-              <span class="podium-track">${escapeHtml(top3[2].careerGoal)}</span>
-              <div class="podium-stats">
-                <span class="stat-chip stat-chip--xp">${top3[2].xp} XP</span>
-                <span class="stat-chip stat-chip--labs">🧪 ${top3[2].labsPassed}</span>
-              </div>
-            </div>
-          ` : ''}
+          ${podiumOrder.map((m) => renderPodiumStep(m, currentUserId)).join('')}
         </div>
       ` : ''}
 
-      <div class="leaderboard-list" role="table" aria-label="Full cohort ranking">
-        <div class="leaderboard-list__header" role="row">
-          <span role="columnheader">Rank</span>
-          <span role="columnheader">Member</span>
-          <span role="columnheader">Track</span>
-          <span role="columnheader">Labs</span>
-          <span role="columnheader">Streak</span>
-          <span role="columnheader">Total XP</span>
+      <div class="leaderboard-list" role="list" aria-label="Full cohort ranking">
+        <div class="leaderboard-list__head">
+          <span>All members</span>
+          <span>${rankedMembers.length} ranked</span>
         </div>
-        ${rest.map((m) => {
-          const isCurrent = m.uid === currentUserId;
-          // Medal + ordinal ("🥇 1") doesn't fit on one line inside the
-          // small round rank-pill below, so it wraps and the pill ends up
-          // looking top-aligned instead of centered. The medal alone
-          // already identifies the rank without the redundant number.
-          let rankDisplay = `#${m.rank}`;
-          if (m.rank === 1) rankDisplay = '🥇';
-          else if (m.rank === 2) rankDisplay = '🥈';
-          else if (m.rank === 3) rankDisplay = '🥉';
-
-          return `
-            <div class="leaderboard-row ${isCurrent ? 'leaderboard-row--current' : ''}" role="row">
-              <div class="leaderboard-row__rank" role="cell">
-                <span class="rank-pill rank-pill--${m.rank <= 3 ? m.rank : 'default'}">${rankDisplay}</span>
-              </div>
-              <div class="leaderboard-row__member" role="cell">
-                <div class="member-cell">
-                  <div class="mini-avatar">${escapeHtml(m.name.charAt(0).toUpperCase())}</div>
-                  <div>
-                    <strong>${escapeHtml(m.name)}</strong>
-                    ${isCurrent ? '<span class="badge badge--glow badge--you">YOU</span>' : ''}
-                    <div class="table-sub">${escapeHtml(m.department || '')} ${m.level ? '· ' + escapeHtml(m.level) : ''}</div>
-                  </div>
-                </div>
-              </div>
-              <div class="leaderboard-row__meta">
-                <span class="leaderboard-row__track" role="cell">${escapeHtml(m.careerGoal)}</span>
-                <span class="stat-chip stat-chip--labs" role="cell">🧪 ${m.labsPassed}</span>
-                <span class="stat-chip stat-chip--streak" role="cell">🔥 ${m.streak}d</span>
-                <span class="stat-chip stat-chip--xp" role="cell">${m.xp} XP</span>
-              </div>
-            </div>
-          `;
-        }).join('')}
+        ${rankedMembers.map((m) => renderRow(m, currentUserId)).join('')}
       </div>
     </div>
   `;
 }
-
