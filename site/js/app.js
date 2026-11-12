@@ -26,6 +26,7 @@ import { PROGRAM } from './config.js';
 import { annotateWeekStatus } from './pacing.js';
 import { escapeHtml } from './util.js';
 import { initInstallPrompt } from './install-prompt.js';
+import { reviewMilestoneRemote } from './grading-client.js';
 
 const signInButton = document.getElementById('sign-in');
 const appEl = document.getElementById('app');
@@ -113,7 +114,7 @@ if (startedOnPublicRoute) {
     ]);
     if (isStale()) return;
 
-    const stats = computeStats(labRuns, { totalLabs: TOTAL_LABS });
+    const stats = computeStats(labRuns, { totalLabs: TOTAL_LABS, milestones });
     renderDashboard(mountEl, { member: currentMember, stats });
 
     // Certificate banner on dashboard if issued
@@ -316,11 +317,15 @@ if (startedOnPublicRoute) {
       members: allMembers,
       allLabRuns,
       onReviewMilestone: async ({ submissionId, status, feedback }) => {
-        await reviewMilestone(submissionId, {
-          status,
-          feedback,
-          reviewerName: currentMember.name,
-        });
+        const review = { status, feedback, reviewerName: currentMember.name };
+        // A review awards XP, and leaderboard xp is only writable by the
+        // Worker's service account -- so outside local mode the review goes
+        // through the Worker, not straight to Firestore.
+        if (isLocalMode()) {
+          await reviewMilestone(submissionId, review);
+        } else {
+          await reviewMilestoneRemote({ submissionId, ...review });
+        }
         router.refresh();
       },
       onIssueCertificate: async (certData) => {

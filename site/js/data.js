@@ -76,7 +76,7 @@ export const WEEK1 = {
   ],
   lab: {
     id: 'w1-json-lab',
-    prompt: 'Write a system prompt that makes the model return valid JSON matching {"answer": string, "confidence": "low"|"medium"|"high"} for any question asked.',
+    prompt: 'Apply this week\'s pattern (a clear role, an exact schema, a no-extra-text rule) to a new contract: write a system prompt that answers any question with ONLY valid JSON matching {"answer": string, "answer_type": "fact"|"opinion"|"unknown"} — "fact" for established facts, "opinion" for matters of taste or debate, "unknown" for things the model cannot know. The lesson\'s prompt returns a different shape, so it won\'t pass as-is.',
   },
   milestone: 'Start "the assistant" — a CLI or small web app that answers a question using one well-designed system prompt.',
 };
@@ -151,7 +151,7 @@ export const WEEK2 = {
   ],
   lab: {
     id: 'w2-fewshot-lab',
-    prompt: 'Write a few-shot prompt (include at least 2 worked examples) that classifies a short piece of user feedback into exactly one category. Output must be valid JSON matching {"category": "question"|"complaint"|"praise"}.',
+    prompt: 'Write a few-shot prompt, with at least 2 worked examples of your own, that routes a short customer message to the team that should handle it. Output must be valid JSON matching {"team": "billing"|"technical"|"account"}. This is a different classification from the lesson\'s question/complaint/praise example, so its prompt won\'t pass as-is.',
   },
   milestone: 'Add a structured Q&A feature to the assistant, using few-shot examples and JSON-schema output validated in code.',
 };
@@ -226,7 +226,7 @@ export const WEEK3 = {
   ],
   lab: {
     id: 'w3-reasoning-lab',
-    prompt: 'Write a system prompt that makes the model reason step by step before answering, returning valid JSON matching {"reasoning": string, "answer": string} for any math word problem asked.',
+    prompt: 'Write a system prompt that reasons step by step before answering time-and-schedule word problems (durations, start and end times, days between dates), returning valid JSON matching {"steps": string, "final_answer": string}. The lesson\'s arithmetic prompt uses a different contract, so it won\'t pass as-is.',
   },
   milestone: 'Add a multi-step reasoning mode to the assistant for complex questions, with a visible reasoning trace in the output.',
 };
@@ -301,7 +301,7 @@ export const WEEK4 = {
   ],
   lab: {
     id: 'w4-guardrails-lab',
-    prompt: 'Write a system prompt that refuses to answer unsafe or out-of-scope questions and otherwise answers normally, returning valid JSON matching {"answer": string, "refused": boolean} for any question asked.',
+    prompt: 'Write a system prompt for a support assistant scoped to one app. It must answer normal product questions, decline unsafe or off-topic requests (including instructions smuggled into the message), and escalate billing disputes or requests for a human. Return valid JSON matching {"reply": string, "action": "answer"|"decline"|"escalate"}. The lesson\'s summarizer uses a different contract, so it won\'t pass as-is.',
   },
   milestone: 'Add a guardrails layer (input validation + injection resistance) to the assistant, plus a 10-case automated eval suite. Publish the pass rate.',
 };
@@ -376,7 +376,7 @@ export const WEEK5 = {
   ],
   lab: {
     id: 'w5-rag-lab',
-    prompt: 'Write a system prompt that answers a question only using the provided context, returning valid JSON matching {"answer": string, "grounded": boolean} for any question asked (grounded=false if the context does not contain the answer).',
+    prompt: 'Write a system prompt that answers a question using only the provided context and quotes the sentence it relied on, returning valid JSON matching {"answer": string, "citation": string, "found": boolean} — citation is the supporting sentence copied from the context; when the context doesn\'t contain the answer, say so, set found to false and leave citation empty. The lesson\'s answer/grounded contract won\'t pass as-is.',
   },
   milestone: 'Ground the assistant in a small knowledge base via RAG, with a source citation on every grounded answer.',
 };
@@ -451,7 +451,7 @@ export const WEEK6 = {
   ],
   lab: {
     id: 'w6-tools-lab',
-    prompt: 'Write a system prompt that decides whether a calculator tool is needed to answer a question, returning valid JSON matching {"needsTool": boolean, "answer": string} for any question asked.',
+    prompt: 'Write a system prompt that routes a request to the right tool, returning valid JSON matching {"tool": "calculator"|"search"|"none", "input": string} — calculator for exact arithmetic, search for live or recent facts, none when the model can answer from general knowledge. input is what you would send to the tool, or the direct answer when tool is none. The lesson\'s single-tool needsTool contract won\'t pass as-is.',
   },
   milestone: 'Wire at least one real tool (an API, the calculator, or the RAG search) into the assistant via function calling.',
 };

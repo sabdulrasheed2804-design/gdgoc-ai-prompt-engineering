@@ -1,4 +1,5 @@
 import { escapeHtml } from './util.js';
+import { MILESTONE_XP } from './stats.js';
 
 export function validateMilestone(data) {
   const errors = {};
@@ -48,6 +49,11 @@ export function renderMilestoneBox({ week, milestoneDesc, submission }) {
       </div>
 
       <p class="week-card__milestone"><strong>Milestone:</strong> ${escapeHtml(milestoneDesc)}</p>
+      <p class="milestone-box__xp-note">
+        ${submission?.xpAwarded
+          ? `✨ <strong>+${Number(submission.xpAwarded)} XP</strong> earned for this milestone.`
+          : `Optional &mdash; it doesn't gate next week, but earns <strong>+${MILESTONE_XP.approved} XP</strong> once a lead approves it (<strong>+${MILESTONE_XP.excellent} XP</strong> if marked excellent).`}
+      </p>
 
       ${hasSubmission ? `
         <div class="milestone-submission-summary">

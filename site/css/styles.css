@@ -1095,6 +1095,16 @@ a.week-tile:hover {
   color: var(--color-text);
 }
 
+.milestone-box__xp-note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.milestone-box__xp-note strong {
+  color: #fbbc05;
+}
+
 /* Graded Prompt Lab Area */
 .week-card__lab-box {
   background: var(--color-bg-secondary);
@@ -2425,12 +2435,18 @@ a.week-tile:hover {
   margin-top: 6px;
 }
 
+/* Podium -- the classic three-step silhouette (2nd | 1st | 3rd), and it
+   stays three-across at every width. Three narrow columns still fit a
+   phone; stacking the top three as full-width cards instead turned them
+   into ~750px of near-identical boxes before the list even began, and
+   lost the one visual idea a podium has. */
 .podium {
   display: grid;
-  grid-template-columns: 1fr 1.15fr 1fr;
-  align-items: flex-end;
-  gap: 16px;
-  margin-top: 34px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .podium-step {
@@ -2438,138 +2454,123 @@ a.week-tile:hover {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 24px 18px;
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  position: relative;
-  transition: transform var(--transition-fast);
+  min-width: 0;
+  padding: 10px 4px 0;
+  border-radius: 12px 12px 0 0;
 }
 
-.podium-step:hover {
-  transform: translateY(-2px);
+/* Highlight the signed-in member's own step on the pedestal, not the whole
+   column -- a full-height tint behind the shortest pedestal read as a
+   taller block than 1st place. */
+.podium-step--current .podium-pedestal {
+  box-shadow: inset 0 3px 0 var(--color-blue);
 }
 
-.podium-step--1 {
-  /* The classic podium silhouette -- 1st visibly taller/raised above 2nd
-     and 3rd -- needs a negative margin, not transform: translateY, since
-     .podium-step:hover already animates transform and a higher-specificity
-     :hover rule would otherwise cancel this card's own elevation the
-     moment it's hovered. */
-  margin-top: -20px;
-  background: linear-gradient(180deg, rgba(251, 188, 5, 0.16) 0%, var(--color-surface) 100%);
-  border-color: rgba(251, 188, 5, 0.55);
-  border-width: 2px;
-  padding: 32px 18px 26px;
-  box-shadow: 0 0 32px rgba(251, 188, 5, 0.18);
-}
-
-.podium-step--2 {
-  background: linear-gradient(180deg, rgba(148, 163, 184, 0.1) 0%, var(--color-surface) 100%);
-  border-color: rgba(148, 163, 184, 0.3);
-}
-
-.podium-step--3 {
-  background: linear-gradient(180deg, rgba(217, 119, 6, 0.1) 0%, var(--color-surface) 100%);
-  border-color: rgba(217, 119, 6, 0.3);
-}
-
-.podium-step--current {
-  outline: 2px solid var(--color-blue);
-  outline-offset: 2px;
-}
-
-.podium-crown {
-  position: absolute;
-  top: -34px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 1.8rem;
-  animation: floatBounce 2.5s ease-in-out infinite;
-}
-
-@keyframes floatBounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(-4px); }
-}
-
-.podium-step--1 .podium-medal { color: #fbbc05; }
-.podium-step--2 .podium-medal { color: #cbd5e1; }
-.podium-step--3 .podium-medal { color: #d97706; }
-
-.podium-medal {
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-secondary);
-  margin-bottom: 10px;
+.podium-step--current .podium-name {
+  color: var(--color-blue);
 }
 
 .podium-avatar {
-  width: 54px;
-  height: 54px;
+  position: relative;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.3rem;
   font-weight: 700;
   color: var(--color-text-primary);
-  margin-bottom: 12px;
+  background: var(--color-surface);
   border: 2px solid var(--color-border);
-}
-
-.podium-avatar--gold {
-  border-color: #fbbc05;
-  background: rgba(251, 188, 5, 0.2);
-  color: #fbbc05;
-}
-
-.podium-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: 2px;
-}
-
-.podium-track {
-  font-size: 0.78rem;
-  color: var(--color-text-secondary);
   margin-bottom: 10px;
 }
 
-.podium-stats {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 2px;
+.podium-step--1 .podium-avatar {
+  width: 68px;
+  height: 68px;
+  font-size: 1.6rem;
+  border-color: #fbbc05;
+  box-shadow: 0 0 0 4px rgba(251, 188, 5, 0.16), 0 0 28px rgba(251, 188, 5, 0.22);
 }
 
-/* Shared pill used for every labs/streak/XP figure, in the podium and in
-   the ranked list below it, so the same stat reads the same way everywhere
-   on the page instead of each spot inventing its own treatment. */
-.stat-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--color-text-secondary);
+.podium-step--2 .podium-avatar {
+  border-color: #cbd5e1;
+}
+
+.podium-step--3 .podium-avatar {
+  border-color: #d97706;
+}
+
+.podium-medal {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  font-size: 1.1rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.podium-name {
+  max-width: 100%;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.stat-chip--xp {
+.podium-xp {
   font-family: var(--font-mono);
+  font-size: 0.85rem;
   font-weight: 700;
   color: #fbbc05;
-  background: rgba(251, 188, 5, 0.14);
+  margin: 2px 0 10px;
 }
 
+/* The pedestal heights are what make it read as a podium: 1st tallest,
+   then 2nd, then 3rd, all standing on the container's bottom border. */
+.podium-pedestal {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-top: 10px;
+  border-radius: 10px 10px 0 0;
+  border: 1px solid var(--color-border);
+  border-bottom: none;
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+}
+
+.podium-step--1 .podium-pedestal {
+  height: 84px;
+  color: #fbbc05;
+  border-color: rgba(251, 188, 5, 0.45);
+  background: linear-gradient(180deg, rgba(251, 188, 5, 0.22), rgba(251, 188, 5, 0.04));
+}
+
+.podium-step--2 .podium-pedestal {
+  height: 60px;
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.35);
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.18), rgba(148, 163, 184, 0.03));
+}
+
+.podium-step--3 .podium-pedestal {
+  height: 44px;
+  color: #fb923c;
+  border-color: rgba(217, 119, 6, 0.35);
+  background: linear-gradient(180deg, rgba(217, 119, 6, 0.18), rgba(217, 119, 6, 0.03));
+}
+
+/* Ranking list -- one fixed-height line per member: rank, avatar, name
+   with a single muted meta line, XP right-aligned as the primary number.
+   No chips or column headers to wrap, so every row is the same shape on
+   a phone as on a desktop. */
 .leaderboard-list {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -2577,27 +2578,26 @@ a.week-tile:hover {
   overflow: hidden;
 }
 
-.leaderboard-list__header,
-.leaderboard-row {
-  display: grid;
-  grid-template-columns: 56px minmax(170px, 1.8fr) minmax(100px, 1fr) 70px 90px 100px;
+.leaderboard-list__head {
+  display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.leaderboard-list__header {
-  padding: 14px 18px;
-  font-size: 0.78rem;
+  justify-content: space-between;
+  padding: 12px 18px;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--color-text-secondary);
   border-bottom: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.02);
 }
 
 .leaderboard-row {
-  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: 28px 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -2610,58 +2610,79 @@ a.week-tile:hover {
 }
 
 .leaderboard-row--current {
-  background: rgba(66, 133, 244, 0.08) !important;
-  font-weight: 600;
+  background: rgba(66, 133, 244, 0.08);
   box-shadow: inset 3px 0 0 var(--color-blue);
 }
 
-.leaderboard-row__track {
+.leaderboard-row__rank {
+  font-family: var(--font-mono);
   font-size: 0.85rem;
-  color: var(--color-text-secondary);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: center;
 }
 
-/* On desktop this wrapper is invisible to layout -- its four children
-   (track + the three stat chips) become direct items of the row's own
-   grid, lining up under the Track/Labs/Streak/XP header columns. On
-   mobile it switches to a wrapping flex row instead (see media query),
-   so the same markup serves both layouts with no duplication. */
-.leaderboard-row__meta {
-  display: contents;
+.leaderboard-row__rank--medal {
+  font-size: 1.15rem;
+  line-height: 1;
 }
 
-.rank-pill {
-  display: inline-flex;
+.leaderboard-row__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  background: rgba(255, 255, 255, 0.04);
-  flex-shrink: 0;
-  line-height: 1;
+  font-size: 0.9rem;
+  background: rgba(66, 133, 244, 0.15);
+  color: var(--color-blue);
+}
+
+.leaderboard-row__info {
+  min-width: 0;
+}
+
+.leaderboard-row__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.leaderboard-row__name > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.rank-pill--1 {
-  background: rgba(251, 188, 5, 0.2);
+.leaderboard-row__meta {
+  margin-top: 2px;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leaderboard-row__xp {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
   color: #fbbc05;
-  border: 1px solid rgba(251, 188, 5, 0.4);
+  white-space: nowrap;
+  text-align: right;
 }
 
-.rank-pill--2 {
-  background: rgba(148, 163, 184, 0.2);
-  color: #cbd5e1;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-}
-
-.rank-pill--3 {
-  background: rgba(217, 119, 6, 0.2);
-  color: #fb923c;
-  border: 1px solid rgba(217, 119, 6, 0.4);
+.leaderboard-row__xp small {
+  margin-left: 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
 }
 
 .member-cell {
@@ -3300,62 +3321,58 @@ a.week-tile:hover {
   .lesson-stepper__nav {
     flex-wrap: nowrap;
   }
+  /* The podium keeps its three-across silhouette on phones; everything
+     just scales down a notch so three columns fit a 360px screen. */
   .podium {
-    grid-template-columns: 1fr;
-    margin-top: 16px;
+    gap: 8px;
+    padding: 0;
   }
-  /* Stacked single-column, the source order that puts 1st place visually
-     in the middle column on desktop (2nd, 1st, 3rd) would otherwise stack
-     2nd place on top -- reorder so 1st actually appears first. The
-     desktop-only elevation and crown placement (tuned for sitting beside
-     shorter 2nd/3rd columns) also don't make sense once everything is one
-     column, so both reset here. */
-  .podium-step--1 {
-    order: -1;
-    margin-top: 0;
+  .podium-avatar {
+    width: 46px;
+    height: 46px;
+    font-size: 1.1rem;
   }
-  .podium-crown {
-    position: static;
-    transform: none;
-    margin-bottom: 4px;
+  .podium-step--1 .podium-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 1.3rem;
   }
-  @keyframes floatBounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
+  .podium-name {
+    font-size: 0.82rem;
+  }
+  .podium-xp {
+    font-size: 0.78rem;
+  }
+  .podium-pedestal {
+    font-size: 1.15rem;
+  }
+  .podium-step--1 .podium-pedestal {
+    height: 64px;
+  }
+  .podium-step--2 .podium-pedestal {
+    height: 46px;
+  }
+  .podium-step--3 .podium-pedestal {
+    height: 34px;
+  }
+  .leaderboard-row {
+    grid-template-columns: 22px 34px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+  .leaderboard-row__avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 0.85rem;
+  }
+  .leaderboard-row__xp {
+    font-size: 0.92rem;
   }
   .journal-main-grid {
     grid-template-columns: 1fr;
   }
   .journal-form-card {
     position: static;
-  }
-  /* Six columns (Rank/Member/Track/Labs/Streak/XP) never fit a phone
-     width. The header row (column labels) is redundant once each stat is
-     its own labeled chip, so it just hides; each row reflows from one
-     six-column grid line into two lines -- name up top, rank beside it,
-     then every other field as a wrapping row of chips underneath. */
-  .leaderboard-list__header {
-    display: none;
-  }
-  .leaderboard-row {
-    grid-template-columns: auto 1fr;
-    grid-template-areas: "rank member" "rank meta";
-    row-gap: 6px;
-    padding: 14px 16px;
-  }
-  .leaderboard-row__rank {
-    grid-area: rank;
-    align-self: start;
-  }
-  .leaderboard-row__member {
-    grid-area: member;
-  }
-  .leaderboard-row__meta {
-    grid-area: meta;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 8px;
   }
 }
 
