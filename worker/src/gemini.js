@@ -14,9 +14,18 @@ export const gemini = { callGemini };
 async function callGemini(systemPrompt, userMessage, env) {
   const model = env.GEMINI_MODEL || 'gemini-2.5-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEMINI_API_KEY}`;
+  // temperature 0 so grading is repeatable: at the default temperature the
+  // same correct prompt could pass one attempt and fail the next on pure
+  // sampling luck. Thinking is switched off for the 2.5 models -- it adds
+  // latency and burns the member's daily token cap without changing
+  // whether a short JSON reply matches a schema.
+  const generationConfig = { temperature: 0 };
+  if (model.includes('2.5')) generationConfig.thinkingConfig = { thinkingBudget: 0 };
+
   const body = JSON.stringify({
     systemInstruction: { parts: [{ text: systemPrompt }] },
     contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+    generationConfig,
   });
 
   let lastError;

@@ -1,9 +1,11 @@
 import { verifyIdToken, AuthError } from './auth.js';
 import { makeFirestoreClient } from './firestore.js';
 import { evaluateSubmission, ValidationError, WEEK_BY_LAB_ID } from './grading.js';
+import { XP_PER_LAB, MILESTONE_XP } from '../../site/js/stats.js';
 
 const DAILY_TOKEN_CAP = 50000;
-const XP_PER_LAB = 10; // must match site/js/stats.js's XP_PER_LAB
+const REVIEW_STATUSES = ['approved', 'excellent', 'needs_work'];
+const MAX_FEEDBACK_LENGTH = 2000;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -16,6 +18,12 @@ function json(body, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   });
+}
+
+function httpError(message, status) {
+  const err = new Error(message);
+  err.status = status;
+  return err;
 }
 
 function todayString() {
@@ -35,9 +43,7 @@ export async function handleGradeLab({ uid, labId, promptText }, env, firestore)
   const tokensToday = existingUsage && existingUsage.lastResetDate === today ? existingUsage.tokensToday : 0;
 
   if (tokensToday >= DAILY_TOKEN_CAP) {
-    const err = new Error("You've reached today's grading limit. Try again tomorrow.");
-    err.status = 429;
-    throw err;
+    throw httpError("You've reached today's grading limit. Try again tomorrow.", 429);
   }
 
   let result;
@@ -48,9 +54,7 @@ export async function handleGradeLab({ uid, labId, promptText }, env, firestore)
       err.status = 400;
       throw err;
     }
-    const wrapped = new Error('Grading service is busy, please try again.');
-    wrapped.status = 503;
-    throw wrapped;
+    throw httpError('Grading service is busy, please try again.', 503);
   }
 
   // Derived from labId, never from the client's request -- a client-supplied
@@ -133,6 +137,59 @@ export async function handleGradeLab({ uid, labId, promptText }, env, firestore)
   return { passed: result.passed, score: result.score, feedback: result.feedback };
 }
 
+// A lead's milestone review comes through here instead of being written to
+// Firestore from the browser, because approving a milestone now awards XP
+// and leaderboard xp is only ever written by this Worker's service account
+// (firestore.rules lets no client, admin or not, touch it). The milestone
+// document remembers how much XP it has awarded, so re-reviewing (approved
+// -> excellent, or back to needs_work) adjusts by the difference rather
+// than paying out twice.
+export async function handleReviewMilestone({ uid, submissionId, status, feedback, reviewerName }, firestore) {
+  const adminDoc = await firestore.getDocument(`admins/${uid}`);
+  if (!adminDoc) throw httpError('Only track leads can review milestones.', 403);
+
+  if (typeof submissionId !== 'string' || !/^[\w-]+$/.test(submissionId)) {
+    throw httpError('Invalid submission id.', 400);
+  }
+  if (!REVIEW_STATUSES.includes(status)) {
+    throw httpError(`status must be one of ${REVIEW_STATUSES.join(', ')}.`, 400);
+  }
+
+  const path = `milestones/${submissionId}`;
+  const existing = await firestore.getDocument(path);
+  if (!existing) throw httpError('Milestone submission not found.', 404);
+
+  const xpAwarded = MILESTONE_XP[status] ?? 0;
+  let xpDelta = 0;
+  await firestore.transactionalUpdate(path, (current) => {
+    xpDelta = xpAwarded - (Number(current?.xpAwarded) || 0);
+    return {
+      ...current,
+      status,
+      feedback: typeof feedback === 'string' ? feedback.slice(0, MAX_FEEDBACK_LENGTH) : '',
+      reviewerName: typeof reviewerName === 'string' && reviewerName ? reviewerName : 'Lead',
+      reviewedAt: Date.now(),
+      xpAwarded,
+    };
+  });
+
+  if (xpDelta !== 0 && existing.memberId) {
+    // Best-effort, like the grading path's leaderboard write: the review
+    // itself has already been recorded and must not be reported as failed
+    // because the ranking projection couldn't be updated.
+    try {
+      await firestore.transactionalUpdate(`leaderboard/${existing.memberId}`, (current) => ({
+        ...current,
+        xp: Math.max(0, (current?.xp ?? 0) + xpDelta),
+      }));
+    } catch (err) {
+      console.error('failed to apply milestone xp to leaderboard entry', err);
+    }
+  }
+
+  return { status, xpAwarded, xpDelta };
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') {
@@ -162,7 +219,15 @@ export default {
     }
 
     const firestore = makeFirestoreClient(serviceAccount);
+    const route = new URL(request.url).pathname.replace(/\/+$/, '') || '/';
     try {
+      if (route === '/review-milestone') {
+        const result = await handleReviewMilestone(
+          { uid, submissionId: payload.submissionId, status: payload.status, feedback: payload.feedback, reviewerName: payload.reviewerName },
+          firestore
+        );
+        return json(result);
+      }
       const result = await handleGradeLab(
         { uid, labId: payload.labId, promptText: payload.promptText },
         env,

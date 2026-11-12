@@ -13,22 +13,58 @@ export const WEEK_BY_LAB_ID = Object.fromEntries(
 
 export class ValidationError extends Error {}
 
-export function matchesSchema(text, schema) {
-  let parsed;
+// Models routinely wrap JSON in a ```json fence or put "Output:" in front
+// of it even when told not to. The lab is about whether the prompt makes
+// the model honour the JSON contract, so grade the JSON object inside the
+// reply rather than failing on the wrapper -- a member who got the
+// contract right shouldn't fail because the model added three backticks.
+export function extractJson(text) {
+  if (typeof text !== 'string') return null;
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fenced ? fenced[1] : text;
+  const start = candidate.indexOf('{');
+  const end = candidate.lastIndexOf('}');
+  if (start === -1 || end < start) return null;
   try {
-    parsed = JSON.parse(text);
+    const parsed = JSON.parse(candidate.slice(start, end + 1));
+    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
   } catch {
-    return false;
+    return null;
   }
-  if (typeof parsed !== 'object' || parsed === null) return false;
+}
 
-  return Object.entries(schema).every(([key, rule]) => {
+function describeRule(rule) {
+  return Array.isArray(rule) ? `one of ${rule.join(', ')}` : `a ${rule}`;
+}
+
+// null when the reply satisfies the schema and any expected values for
+// this test case; otherwise a one-line, member-facing reason it didn't.
+// The reason names the field and the value seen, never the hidden test
+// question itself.
+export function checkOutput(text, schema, expect = {}) {
+  const parsed = extractJson(text);
+  if (!parsed) return 'the reply was not a JSON object';
+
+  for (const [key, rule] of Object.entries(schema)) {
     const value = parsed[key];
-    if (Array.isArray(rule)) return rule.includes(value);
-    if (rule === 'string') return typeof value === 'string';
-    if (rule === 'boolean') return typeof value === 'boolean';
-    return false;
-  });
+    if (value === undefined) return `the JSON has no "${key}" field (expected ${describeRule(rule)})`;
+    const ok = Array.isArray(rule) ? rule.includes(value)
+      : rule === 'string' ? typeof value === 'string'
+      : rule === 'boolean' ? typeof value === 'boolean'
+      : false;
+    if (!ok) return `"${key}" was ${JSON.stringify(value)}, expected ${describeRule(rule)}`;
+  }
+
+  for (const [key, expected] of Object.entries(expect)) {
+    if (parsed[key] !== expected) {
+      return `"${key}" was ${JSON.stringify(parsed[key])}, but for this question it should be ${JSON.stringify(expected)}`;
+    }
+  }
+  return null;
+}
+
+export function matchesSchema(text, schema) {
+  return checkOutput(text, schema) === null;
 }
 
 export async function evaluateSubmission({ labId, promptText }, env) {
@@ -46,25 +82,26 @@ export async function evaluateSubmission({ labId, promptText }, env) {
   const { schema, testCases } = rubric;
 
   let tokensUsed = 0;
-  let matchCount = 0;
   let sampleOutput;
+  const failures = [];
 
-  for (const testCase of testCases) {
+  for (const [index, testCase] of testCases.entries()) {
     const { text, tokensUsed: used } = await gemini.callGemini(promptText, testCase.question, env);
     tokensUsed += used;
     if (sampleOutput === undefined) sampleOutput = text;
-    if (matchesSchema(text, schema)) matchCount += 1;
+    const problem = checkOutput(text, schema, testCase.expect);
+    if (problem) failures.push(`Test ${index + 1}: ${problem}.`);
   }
 
-  const passed = matchCount === testCases.length;
-  const score = matchCount / testCases.length;
+  const matchCount = testCases.length - failures.length;
+  const passed = failures.length === 0;
 
   return {
     passed,
-    score,
+    score: matchCount / testCases.length,
     feedback: passed
       ? 'All test questions returned valid matching JSON.'
-      : `${matchCount}/${testCases.length} test questions returned valid matching JSON.`,
+      : `${matchCount}/${testCases.length} test questions passed. ${failures.join(' ')}`,
     tokensUsed,
     sampleOutput,
   };

@@ -1095,6 +1095,16 @@ a.week-tile:hover {
   color: var(--color-text);
 }
 
+.milestone-box__xp-note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.milestone-box__xp-note strong {
+  color: #fbbc05;
+}
+
 /* Graded Prompt Lab Area */
 .week-card__lab-box {
   background: var(--color-bg-secondary);
